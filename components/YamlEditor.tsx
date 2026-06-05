@@ -117,7 +117,7 @@ export function YamlEditor({
             YAML 数据层
           </h3>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            这里是结构化数据，可用于校验、导出和后续工具处理。
+            这里展示结构化剧本数据，可用于校验、导出和后续工具处理。需要像剧作家一样修改时，打开剧本修改窗口。
           </p>
           {usageNote ? (
             <p className="mt-2 text-sm leading-6 text-slate-500">{usageNote}</p>
