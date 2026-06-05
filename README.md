@@ -16,9 +16,25 @@ Novel2Script 是一个 AI 小说转剧本工具，目标是帮助小说作者将
 - TypeScript
 - Tailwind CSS
 - 暂不接入数据库
-- 暂不调用真实 AI 接口
+- OpenAI-compatible Chat Completions API
 
 ## 本地启动方式
+
+复制环境变量文件：
+
+```bash
+cp .env.example .env.local
+```
+
+填写自己的模型 API Key：
+
+```text
+OPENAI_API_KEY=你的模型 API Key
+OPENAI_BASE_URL=OpenAI-compatible API 地址，可选
+OPENAI_MODEL=模型名称，可选
+```
+
+安装依赖并启动：
 
 ```bash
 npm install
@@ -41,14 +57,16 @@ http://localhost:3000
 - 已完成章节数量检测
 - 已完成示例小说加载
 - 已完成生成按钮状态控制
+- 已完成 AI 生成接口
+- 已完成 OpenAI-compatible API 调用封装
+- 已完成小说到剧本 YAML 的核心生成链路
+- 已完成前端生成状态和结果展示
 
 ## 后续计划
 
 - 设计剧本 YAML Schema
-- 下一阶段将接入 AI 生成接口
-- 下一阶段将生成结构化剧本 YAML
-- 增加 YAML Schema 校验
-- 增加导出能力
+- 下一阶段将实现 YAML Schema 校验
+- 下一阶段将实现 YAML 编辑和导出
 
 ## 原创功能说明
 

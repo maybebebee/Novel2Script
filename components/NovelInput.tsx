@@ -21,7 +21,10 @@ function countWords(text: string) {
 
 export function NovelInput() {
   const [text, setText] = useState("");
-  const [generationNotice, setGenerationNotice] = useState("");
+  const [yamlResult, setYamlResult] = useState("");
+  const [usageNote, setUsageNote] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
   const chapterResult = useMemo(() => detectChapters(text), [text]);
   const wordCount = useMemo(() => countWords(text), [text]);
   const hasEnoughChapters = chapterResult.count >= 3;
@@ -33,23 +36,71 @@ export function NovelInput() {
         ? `已检测到 ${chapterResult.count} 个章节，可以开始生成剧本`
         : `当前检测到 ${chapterResult.count} 个章节，请至少输入 3 个章节以上的小说文本`;
 
-  function handleGenerateClick() {
-    setGenerationNotice("AI 生成将在下一阶段接入，本阶段已完成输入检测。");
+  async function handleGenerateClick() {
+    if (!hasEnoughChapters || isGenerating) {
+      return;
+    }
+
+    setIsGenerating(true);
+    setErrorMessage("");
+    setUsageNote("");
+    setYamlResult("");
+
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          novelText: text,
+        }),
+      });
+      const data = (await response.json()) as {
+        yaml?: string;
+        usageNote?: string;
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(data.error || "生成失败，请稍后重试。");
+      }
+
+      if (!data.yaml) {
+        throw new Error("生成结果为空，请稍后重试。");
+      }
+
+      setYamlResult(data.yaml);
+      setUsageNote(data.usageNote || "");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "生成剧本 YAML 失败，请稍后重试。",
+      );
+    } finally {
+      setIsGenerating(false);
+    }
   }
 
   function handleTextChange(value: string) {
     setText(value);
-    setGenerationNotice("");
+    setErrorMessage("");
+    setUsageNote("");
   }
 
   function handleClearText() {
     setText("");
-    setGenerationNotice("");
+    setYamlResult("");
+    setUsageNote("");
+    setErrorMessage("");
   }
 
   function handleLoadSample() {
     setText(sampleNovel);
-    setGenerationNotice("");
+    setYamlResult("");
+    setUsageNote("");
+    setErrorMessage("");
   }
 
   return (
@@ -139,17 +190,46 @@ export function NovelInput() {
         <button
           type="button"
           onClick={handleGenerateClick}
-          disabled={!hasEnoughChapters}
+          disabled={!hasEnoughChapters || isGenerating}
           className="rounded-lg bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
         >
-          生成剧本 YAML
+          {isGenerating ? "正在生成剧本..." : "生成剧本 YAML"}
         </button>
-        {generationNotice ? (
+        {isGenerating ? (
           <p className="text-sm font-medium text-slate-700">
-            {generationNotice}
+            AI 正在分析章节、人物、场景和对白，请稍候。
           </p>
         ) : null}
       </div>
+
+      {errorMessage ? (
+        <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-800">
+          {errorMessage}
+        </div>
+      ) : null}
+
+      {yamlResult ? (
+        <div className="mt-8">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-950">
+                生成的剧本 YAML
+              </h3>
+              {usageNote ? (
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  {usageNote}
+                </p>
+              ) : null}
+            </div>
+          </div>
+          <textarea
+            value={yamlResult}
+            onChange={(event) => setYamlResult(event.target.value)}
+            className="mt-4 h-96 w-full resize-y rounded-lg border border-slate-200 bg-slate-950 p-4 font-mono text-sm leading-6 text-slate-50 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+            spellCheck={false}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
