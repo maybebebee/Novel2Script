@@ -1,3 +1,4 @@
+import { NovelInput } from "@/components/NovelInput";
 import { SectionHeading } from "@/components/SectionHeading";
 import { APP_NAME, CORE_FLOW } from "@/lib/constants";
 
@@ -47,29 +48,9 @@ export default function Home() {
           <SectionHeading
             eyebrow="Start"
             title="开始使用"
-            description="这里将作为后续小说输入区域。本次版本先保留静态占位，确保页面结构稳定、主分支可运行。"
+            description="粘贴三章以上小说文本，先完成章节检测。后续版本会在此基础上接入 AI 改编、YAML 生成和导出能力。"
           />
-
-          <div className="mt-8 rounded-lg border border-dashed border-slate-300 bg-white p-6">
-            <label
-              htmlFor="novel-placeholder"
-              className="block text-sm font-medium text-slate-700"
-            >
-              小说文本输入区
-            </label>
-            <textarea
-              id="novel-placeholder"
-              className="mt-3 h-44 w-full resize-none rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600 outline-none"
-              placeholder="后续将在这里粘贴三章以上小说文本。"
-              disabled
-            />
-            <button
-              className="mt-4 rounded-lg bg-slate-950 px-5 py-3 text-sm font-semibold text-white opacity-70"
-              disabled
-            >
-              开始转换
-            </button>
-          </div>
+          <NovelInput />
         </div>
       </section>
     </main>
