@@ -1,19 +1,17 @@
-export type DetectedChapter = {
+export type ChapterInfo = {
   index: number;
   title: string;
   start: number;
   end: number;
 };
 
-export type ChapterDetectionResult = {
-  count: number;
-  chapters: DetectedChapter[];
-};
-
 const CHAPTER_HEADING_PATTERN =
-  /^(?:\s{0,3}#{1,6}\s*)?((?:第[\d一二三四五六七八九十百千万零两]+章)|(?:章节[\d一二三四五六七八九十百千万零两]+)|(?:Chapter\s+\d+))\s*[:：、.\-—]?\s*([^\r\n]*)$/gim;
+  /^[ \t]*(?:#{1,6}[ \t]*)?((?:第[\d一二三四五六七八九十百千万零两]+章)|(?:章节[\d一二三四五六七八九十百千万零两]+)|(?:Chapter\s+\d+))[ \t]*[:：、.\-—]?[ \t]*([^\r\n]*)$/gim;
 
-export function detectChapters(text: string): ChapterDetectionResult {
+export function detectChapters(text: string): {
+  count: number;
+  chapters: ChapterInfo[];
+} {
   if (!text.trim()) {
     return {
       count: 0,

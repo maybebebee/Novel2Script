@@ -3,17 +3,17 @@
 import { useMemo, useState } from "react";
 import { detectChapters } from "@/lib/chapter";
 
-const sampleNovel = `第一章：雨夜来信
+const sampleNovel = `第一章 雨夜来信
 
-林晚在旧书店打烊前收到一封没有署名的信。信里只有一句话：明天日出前，不要打开阁楼的门。
+林晚在旧书店打烊前收到一封没有署名的信。雨水沿着玻璃窗往下爬，街灯把店里的书架照得像一排沉默的人。信纸很旧，边缘有被火烤过的痕迹，上面只有一句话：明天日出前，不要打开阁楼的门。她抬头看向通往二楼的窄梯，忽然发现那扇多年没有动过的门缝里，正落下一点蓝色的灰。
 
-第二章：阁楼脚步
+第二章 阁楼脚步
 
-午夜过后，阁楼上传来缓慢的脚步声。林晚握着手电站在楼梯口，发现门缝下渗出一线微弱的蓝光。
+午夜过后，书店的挂钟停在十二点十七分。阁楼上传来缓慢的脚步声，每一步都像踩在林晚的心口。她握着手电站在楼梯口，听见门后有人轻轻翻页。她想起外祖父临终前说过，阁楼里锁着一本不能写完的剧本。可现在，那本剧本似乎正在自己写下新的台词，甚至写出了她下一秒会说的话。
 
-第三章：未写完的剧本
+第三章 未写完的剧本
 
-她最终推开了门。阁楼中央的桌上放着一本剧本，第一页写着她刚刚说过的话，而最后一页仍是空白。`;
+她最终推开了门。阁楼中央的桌上放着一本黑色封面的剧本，第一页写着她刚刚说过的话，最后一页却仍是空白。窗外雨声突然消失，整座书店像被按下暂停键。林晚看见剧本旁边摆着一枚旧钥匙，钥匙下面压着一张照片。照片里，她站在陌生舞台中央，而观众席第一排坐着一个和她长得一模一样的人。`;
 
 function countWords(text: string) {
   return Array.from(text.replace(/\s/g, "")).length;
@@ -21,9 +21,36 @@ function countWords(text: string) {
 
 export function NovelInput() {
   const [text, setText] = useState("");
+  const [generationNotice, setGenerationNotice] = useState("");
   const chapterResult = useMemo(() => detectChapters(text), [text]);
   const wordCount = useMemo(() => countWords(text), [text]);
   const hasEnoughChapters = chapterResult.count >= 3;
+
+  const detectionMessage =
+    chapterResult.count === 0
+      ? "未检测到章节标题，请使用‘第一章’、‘第1章’或‘Chapter 1’等格式"
+      : hasEnoughChapters
+        ? `已检测到 ${chapterResult.count} 个章节，可以开始生成剧本`
+        : `当前检测到 ${chapterResult.count} 个章节，请至少输入 3 个章节以上的小说文本`;
+
+  function handleGenerateClick() {
+    setGenerationNotice("AI 生成将在下一阶段接入，本阶段已完成输入检测。");
+  }
+
+  function handleTextChange(value: string) {
+    setText(value);
+    setGenerationNotice("");
+  }
+
+  function handleClearText() {
+    setText("");
+    setGenerationNotice("");
+  }
+
+  function handleLoadSample() {
+    setText(sampleNovel);
+    setGenerationNotice("");
+  }
 
   return (
     <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
@@ -43,7 +70,7 @@ export function NovelInput() {
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => setText("")}
+            onClick={handleClearText}
             disabled={!text}
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -51,7 +78,7 @@ export function NovelInput() {
           </button>
           <button
             type="button"
-            onClick={() => setText(sampleNovel)}
+            onClick={handleLoadSample}
             className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             加载示例小说
@@ -62,7 +89,7 @@ export function NovelInput() {
       <textarea
         id="novel-text"
         value={text}
-        onChange={(event) => setText(event.target.value)}
+        onChange={(event) => handleTextChange(event.target.value)}
         className="mt-5 h-72 w-full resize-y rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-700 focus:bg-white focus:ring-2 focus:ring-teal-700/15"
         placeholder="请粘贴三章以上小说文本，例如：第一章 雨夜来信、第二章 阁楼脚步、第三章 未写完的剧本..."
       />
@@ -89,9 +116,7 @@ export function NovelInput() {
             : "border-amber-200 bg-amber-50 text-amber-800"
         }`}
       >
-        {hasEnoughChapters
-          ? `已检测到 ${chapterResult.count} 个章节，可以开始生成剧本`
-          : "请至少输入 3 个章节以上的小说文本"}
+        {detectionMessage}
       </div>
 
       {chapterResult.count > 0 ? (
@@ -109,6 +134,22 @@ export function NovelInput() {
           </ol>
         </div>
       ) : null}
+
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <button
+          type="button"
+          onClick={handleGenerateClick}
+          disabled={!hasEnoughChapters}
+          className="rounded-lg bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+        >
+          生成剧本 YAML
+        </button>
+        {generationNotice ? (
+          <p className="text-sm font-medium text-slate-700">
+            {generationNotice}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }
