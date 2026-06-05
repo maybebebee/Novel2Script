@@ -1,0 +1,17 @@
+title: 雨夜来信
+source:
+  chapters:
+    - 第一章
+    - 第二章
+    - 第三章
+characters:
+  - name: 林晚
+    role: 主角
+scenes:
+  - id: scene-001
+    chapter: 第一章
+    location: 旧书店
+    summary: 林晚收到一封神秘来信。
+    dialogue:
+      - character: 林晚
+        text: 这封信是谁留下的？
