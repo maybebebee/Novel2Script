@@ -50,15 +50,31 @@ export type Scene = {
   time: string;
   summary: string;
   characters: string[];
+  visual: SceneVisual;
+  action_lines: string[];
   beats: Beat[];
   dialogues: Dialogue[];
   transition: string;
+  screenplay_text: string;
+};
+
+export type SceneVisual = {
+  atmosphere: string;
+  key_props: string[];
+  sensory_details: string[];
 };
 
 export type Beat = {
   beat_id: string;
   type: string;
   content: string;
+  character_actions: CharacterAction[];
+};
+
+export type CharacterAction = {
+  character_id: string;
+  character_name: string;
+  action: string;
 };
 
 export type Dialogue = {
@@ -66,6 +82,7 @@ export type Dialogue = {
   character_name: string;
   emotion: string;
   line: string;
+  action: string;
 };
 
 export function isScriptDocument(data: unknown): data is ScriptDocument {

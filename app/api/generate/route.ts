@@ -84,7 +84,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       yaml,
-      usageNote: "生成成功，结果为 AI 生成的剧本 YAML 初稿，请继续人工打磨。",
+      usageNote:
+        "生成成功，结果为 AI 生成的细节版剧本 YAML 初稿，请继续人工打磨。",
     });
   } catch (error) {
     return NextResponse.json(

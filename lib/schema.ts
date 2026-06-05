@@ -85,6 +85,14 @@ function validateStringFields(
   });
 }
 
+function validateStringArray(values: unknown[] | null, path: string, issues: ValidationIssue[]) {
+  values?.forEach((value, index) => {
+    if (!isNonEmptyString(value)) {
+      addIssue(issues, `${path}[${index}]`, `${path}[${index}] 必须是非空字符串`);
+    }
+  });
+}
+
 export function validateScriptYamlObject(data: unknown): ValidationResult {
   const issues: ValidationIssue[] = [];
 
@@ -122,7 +130,11 @@ export function validateScriptYamlObject(data: unknown): ValidationResult {
       "script",
       issues,
     );
-    requireArray(data.script, "themes", "script.themes", 1, issues);
+    validateStringArray(
+      requireArray(data.script, "themes", "script.themes", 1, issues),
+      "script.themes",
+      issues,
+    );
   }
 
   const chapters = requireArray(data, "chapters", "chapters", 3, issues);
@@ -192,11 +204,54 @@ export function validateScriptYamlObject(data: unknown): ValidationResult {
         "time",
         "summary",
         "transition",
+        "screenplay_text",
       ],
       path,
       issues,
     );
-    requireArray(scene, "characters", `${path}.characters`, 1, issues);
+    validateStringArray(
+      requireArray(scene, "characters", `${path}.characters`, 1, issues),
+      `${path}.characters`,
+      issues,
+    );
+
+    if (requireObject(scene.visual, `${path}.visual`, issues)) {
+      validateStringFields(
+        scene.visual,
+        ["atmosphere"],
+        `${path}.visual`,
+        issues,
+      );
+      validateStringArray(
+        requireArray(
+          scene.visual,
+          "key_props",
+          `${path}.visual.key_props`,
+          0,
+          issues,
+        ),
+        `${path}.visual.key_props`,
+        issues,
+      );
+      validateStringArray(
+        requireArray(
+          scene.visual,
+          "sensory_details",
+          `${path}.visual.sensory_details`,
+          0,
+          issues,
+        ),
+        `${path}.visual.sensory_details`,
+        issues,
+      );
+    }
+
+    validateStringArray(
+      requireArray(scene, "action_lines", `${path}.action_lines`, 1, issues),
+      `${path}.action_lines`,
+      issues,
+    );
+
     const beats = requireArray(scene, "beats", `${path}.beats`, 1, issues);
     const dialogues = requireArray(
       scene,
@@ -219,6 +274,28 @@ export function validateScriptYamlObject(data: unknown): ValidationResult {
         beatPath,
         issues,
       );
+      const characterActions = requireArray(
+        beat,
+        "character_actions",
+        `${beatPath}.character_actions`,
+        0,
+        issues,
+      );
+
+      characterActions?.forEach((characterAction, actionIndex) => {
+        const actionPath = `${beatPath}.character_actions[${actionIndex}]`;
+
+        if (!requireObject(characterAction, actionPath, issues)) {
+          return;
+        }
+
+        validateStringFields(
+          characterAction,
+          ["character_id", "character_name", "action"],
+          actionPath,
+          issues,
+        );
+      });
     });
 
     dialogues?.forEach((dialogue, dialogueIndex) => {
@@ -230,7 +307,7 @@ export function validateScriptYamlObject(data: unknown): ValidationResult {
 
       validateStringFields(
         dialogue,
-        ["character_id", "character_name", "emotion", "line"],
+        ["character_id", "character_name", "emotion", "line", "action"],
         dialoguePath,
         issues,
       );
@@ -247,12 +324,12 @@ export function validateScriptYamlObject(data: unknown): ValidationResult {
 
     if (
       typeof data.metadata.schema_version === "string" &&
-      data.metadata.schema_version !== "1.0.0"
+      data.metadata.schema_version !== "1.1.0"
     ) {
       addIssue(
         issues,
         "metadata.schema_version",
-        'metadata.schema_version 当前必须是 "1.0.0"',
+        'metadata.schema_version 当前必须是 "1.1.0"',
       );
     }
   }
