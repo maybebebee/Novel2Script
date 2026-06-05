@@ -14,7 +14,7 @@ export default function Home() {
             {APP_NAME}
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-700">
-            一个 AI 小说转剧本工具，帮助作者把三章以上的小说文本转换为结构化剧本 YAML，快速获得可编辑、可继续打磨的剧本初稿。
+            一个 AI 小说转剧本工具，帮助作者把三章以上小说文本转换为结构化剧本 YAML，快速获得可编辑、可校验、可导出的剧本初稿。
           </p>
         </div>
       </section>
@@ -24,7 +24,7 @@ export default function Home() {
           <SectionHeading
             eyebrow="Workflow"
             title="核心流程"
-            description="本 PR 先搭建清晰的 Demo 骨架，后续会逐步接入小说解析、AI 改编、Schema 校验与导出能力。"
+            description="从章节检测到 AI 生成，再到 YAML 编辑、Schema 校验和导出，评委可以在首页完成端到端体验。"
           />
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -48,9 +48,38 @@ export default function Home() {
           <SectionHeading
             eyebrow="Start"
             title="开始使用"
-            description="粘贴三章以上小说文本，先完成章节检测。后续版本会在此基础上接入 AI 改编、YAML 生成和导出能力。"
+            description="粘贴三章以上小说文本，或直接加载示例小说。生成后可以继续编辑 YAML、校验 Schema，并导出最终结果。"
           />
           <NovelInput />
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200 bg-white">
+        <div className="mx-auto grid w-full max-w-6xl gap-6 px-6 py-10 sm:px-8 md:grid-cols-3 lg:px-10">
+          <div>
+            <h2 className="text-base font-semibold text-slate-950">
+              Schema 文档
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              YAML Schema 设计文档位于 docs/yaml-schema.md，包含字段说明、校验规则和设计取舍。
+            </p>
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-slate-950">
+              示例小说
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              原创三章节示例小说位于 examples/sample-novel.md，可用于快速演示输入流程。
+            </p>
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-slate-950">
+              示例输出
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              符合 Schema 的剧本 YAML 示例位于 examples/sample-script.yaml，可用于校验流程演示。
+            </p>
+          </div>
         </div>
       </section>
     </main>

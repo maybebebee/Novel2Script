@@ -115,7 +115,7 @@ export function NovelInput() {
             小说文本输入区
           </label>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            粘贴包含章节标题的小说文本，系统会自动检测章节数量。
+            粘贴包含章节标题的小说文本，系统会自动检测章节数量，并在满足 3 章后开放生成。
           </p>
         </div>
 
@@ -198,7 +198,7 @@ export function NovelInput() {
         </button>
         {isGenerating ? (
           <p className="text-sm font-medium text-slate-700">
-            AI 正在分析章节、人物、场景和对白，请稍候。
+            AI 正在分析章节、人物、地点、场景和对白，请稍候。
           </p>
         ) : null}
       </div>
