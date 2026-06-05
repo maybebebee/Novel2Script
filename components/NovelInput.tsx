@@ -1,8 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { detectChapters } from "@/lib/chapter";
+import { ScriptPreview } from "@/components/ScriptPreview";
 import { YamlEditor } from "@/components/YamlEditor";
+import { detectChapters } from "@/lib/chapter";
+import {
+  parseScriptDocumentFromYaml,
+  scriptDocumentToYaml,
+  type ScriptDocument,
+} from "@/lib/scriptDocument";
 
 const sampleNovel = `第一章 雨夜来信
 
@@ -22,9 +28,14 @@ function countWords(text: string) {
 
 export function NovelInput() {
   const [text, setText] = useState("");
-  const [yamlResult, setYamlResult] = useState("");
+  const [yamlText, setYamlText] = useState("");
+  const [scriptDocument, setScriptDocument] = useState<ScriptDocument | null>(
+    null,
+  );
   const [usageNote, setUsageNote] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [previewError, setPreviewError] = useState("");
+  const [isScriptEditorOpen, setIsScriptEditorOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const chapterResult = useMemo(() => detectChapters(text), [text]);
   const wordCount = useMemo(() => countWords(text), [text]);
@@ -45,7 +56,10 @@ export function NovelInput() {
     setIsGenerating(true);
     setErrorMessage("");
     setUsageNote("");
-    setYamlResult("");
+    setYamlText("");
+    setScriptDocument(null);
+    setPreviewError("");
+    setIsScriptEditorOpen(false);
 
     try {
       const response = await fetch("/api/generate", {
@@ -71,8 +85,18 @@ export function NovelInput() {
         throw new Error("生成结果为空，请稍后重试。");
       }
 
-      setYamlResult(data.yaml);
+      setYamlText(data.yaml);
       setUsageNote(data.usageNote || "");
+
+      const parsed = parseScriptDocumentFromYaml(data.yaml);
+
+      if (parsed.ok) {
+        setScriptDocument(parsed.document);
+      } else {
+        setPreviewError(
+          `YAML 已生成，但暂时无法打开剧本修改窗口：${parsed.error}`,
+        );
+      }
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -84,24 +108,53 @@ export function NovelInput() {
     }
   }
 
+  function resetGeneratedResult() {
+    setYamlText("");
+    setScriptDocument(null);
+    setUsageNote("");
+    setErrorMessage("");
+    setPreviewError("");
+    setIsScriptEditorOpen(false);
+  }
+
   function handleTextChange(value: string) {
     setText(value);
     setErrorMessage("");
-    setUsageNote("");
   }
 
   function handleClearText() {
     setText("");
-    setYamlResult("");
-    setUsageNote("");
-    setErrorMessage("");
+    resetGeneratedResult();
   }
 
   function handleLoadSample() {
     setText(sampleNovel);
-    setYamlResult("");
-    setUsageNote("");
-    setErrorMessage("");
+    resetGeneratedResult();
+  }
+
+  function handlePreviewChange(nextDocument: ScriptDocument) {
+    setScriptDocument(nextDocument);
+    setYamlText(scriptDocumentToYaml(nextDocument));
+    setPreviewError("");
+    setIsScriptEditorOpen(false);
+  }
+
+  function handleYamlTextChange(nextYaml: string) {
+    setYamlText(nextYaml);
+    setPreviewError("");
+  }
+
+  function handleOpenScriptEditor() {
+    const parsed = parseScriptDocumentFromYaml(yamlText);
+
+    if (parsed.ok) {
+      setScriptDocument(parsed.document);
+      setPreviewError("");
+      setIsScriptEditorOpen(true);
+      return;
+    }
+
+    setPreviewError(`无法打开剧本修改窗口：${parsed.error}`);
   }
 
   return (
@@ -209,8 +262,29 @@ export function NovelInput() {
         </div>
       ) : null}
 
-      {yamlResult ? (
-        <YamlEditor initialYaml={yamlResult} usageNote={usageNote} />
+      {yamlText ? (
+        <div className="mt-8 space-y-8">
+          {previewError ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800">
+              {previewError}
+            </div>
+          ) : null}
+
+          <YamlEditor
+            yamlText={yamlText}
+            usageNote={usageNote}
+            onYamlTextChange={handleYamlTextChange}
+            onOpenScriptEditor={handleOpenScriptEditor}
+          />
+
+          {scriptDocument && isScriptEditorOpen ? (
+            <ScriptPreview
+              document={scriptDocument}
+              onApply={handlePreviewChange}
+              onClose={() => setIsScriptEditorOpen(false)}
+            />
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

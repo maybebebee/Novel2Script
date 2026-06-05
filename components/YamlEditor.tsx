@@ -1,47 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { ValidationIssue } from "@/lib/schema";
 
 type YamlEditorProps = {
-  initialYaml: string;
+  yamlText: string;
   usageNote?: string;
+  onYamlTextChange: (nextYaml: string) => void;
+  onOpenScriptEditor?: () => void;
 };
 
-type ValidationState =
-  | {
-      status: "idle";
-      issues: ValidationIssue[];
-      message: string;
-    }
-  | {
-      status: "valid";
-      issues: ValidationIssue[];
-      message: string;
-    }
-  | {
-      status: "invalid";
-      issues: ValidationIssue[];
-      message: string;
-    };
+type ValidationState = {
+  status: "idle" | "valid" | "invalid";
+  issues: ValidationIssue[];
+  message: string;
+};
 
-export function YamlEditor({ initialYaml, usageNote }: YamlEditorProps) {
-  const [yamlText, setYamlText] = useState(initialYaml);
+export function YamlEditor({
+  yamlText,
+  usageNote,
+  onYamlTextChange,
+  onOpenScriptEditor,
+}: YamlEditorProps) {
   const [isValidating, setIsValidating] = useState(false);
   const [validation, setValidation] = useState<ValidationState>({
     status: "idle",
     issues: [],
     message: "",
   });
-
-  useEffect(() => {
-    setYamlText(initialYaml);
-    setValidation({
-      status: "idle",
-      issues: [],
-      message: "",
-    });
-  }, [initialYaml]);
 
   async function handleValidate() {
     setIsValidating(true);
@@ -111,18 +97,42 @@ export function YamlEditor({ initialYaml, usageNote }: YamlEditorProps) {
     URL.revokeObjectURL(url);
   }
 
+  function handleYamlChange(nextYaml: string) {
+    onYamlTextChange(nextYaml);
+    setValidation({
+      status: "idle",
+      issues: [],
+      message: "",
+    });
+  }
+
   return (
-    <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-950">
-            生成的剧本 YAML
+          <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">
+            YAML Data
+          </p>
+          <h3 className="mt-2 text-lg font-semibold text-slate-950">
+            YAML 数据层
           </h3>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            这里是结构化数据，可用于校验、导出和后续工具处理。
+          </p>
           {usageNote ? (
             <p className="mt-2 text-sm leading-6 text-slate-500">{usageNote}</p>
           ) : null}
         </div>
         <div className="flex flex-wrap gap-3">
+          {onOpenScriptEditor ? (
+            <button
+              type="button"
+              onClick={onOpenScriptEditor}
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              修改剧本
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={handleValidate}
@@ -143,14 +153,7 @@ export function YamlEditor({ initialYaml, usageNote }: YamlEditorProps) {
 
       <textarea
         value={yamlText}
-        onChange={(event) => {
-          setYamlText(event.target.value);
-          setValidation({
-            status: "idle",
-            issues: [],
-            message: "",
-          });
-        }}
+        onChange={(event) => handleYamlChange(event.target.value)}
         className="mt-4 h-96 w-full resize-y rounded-lg border border-slate-200 bg-slate-950 p-4 font-mono text-sm leading-6 text-slate-50 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
         spellCheck={false}
       />
