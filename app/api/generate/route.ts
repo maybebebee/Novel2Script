@@ -1,16 +1,9 @@
 import { NextResponse } from "next/server";
 import { generateChatCompletion } from "@/lib/llm";
 import { buildScriptGenerationPrompt } from "@/lib/prompts";
+import { cleanYamlText } from "@/lib/yaml";
 
 const MIN_NOVEL_LENGTH = 300;
-
-function cleanYamlOutput(output: string) {
-  return output
-    .trim()
-    .replace(/^```(?:yaml|yml)?\s*/i, "")
-    .replace(/```\s*$/i, "")
-    .trim();
-}
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -76,7 +69,7 @@ export async function POST(request: Request) {
       userPrompt,
       temperature: 0.3,
     });
-    const yaml = cleanYamlOutput(modelOutput);
+    const yaml = cleanYamlText(modelOutput);
 
     if (!yaml) {
       return NextResponse.json(

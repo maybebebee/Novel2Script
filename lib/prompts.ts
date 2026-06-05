@@ -25,43 +25,43 @@ script:
   language:
   logline:
   themes:
-  chapters:
-    - chapter_id:
-      title:
-      summary:
-  characters:
-    - character_id:
-      name:
-      role:
-      description:
-      motivation:
-      relationships:
-  locations:
-    - location_id:
-      name:
-      description:
-  scenes:
-    - scene_id:
-      chapter_id:
-      title:
-      location_id:
-      time:
-      summary:
-      characters:
-      beats:
-        - beat_id:
-          type:
-          content:
-          dialogues:
-            - character_id:
-              character_name:
-              emotion:
-              line:
-          transition:
-  metadata:
-    schema_version:
-    generated_by:
-    notes:
+chapters:
+  - chapter_id:
+    title:
+    summary:
+characters:
+  - character_id:
+    name:
+    role:
+    description:
+    motivation:
+    relationships:
+locations:
+  - location_id:
+    name:
+    description:
+scenes:
+  - scene_id:
+    chapter_id:
+    title:
+    location_id:
+    time:
+    summary:
+    characters:
+    beats:
+      - beat_id:
+        type:
+        content:
+    dialogues:
+      - character_id:
+        character_name:
+        emotion:
+        line:
+    transition:
+metadata:
+  schema_version:
+  generated_by:
+  notes:
 
 生成规则：
 - chapter_id 使用 chapter_001、chapter_002 这种格式

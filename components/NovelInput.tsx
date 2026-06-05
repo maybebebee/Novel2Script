@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { detectChapters } from "@/lib/chapter";
+import { YamlEditor } from "@/components/YamlEditor";
 
 const sampleNovel = `第一章 雨夜来信
 
@@ -209,26 +210,7 @@ export function NovelInput() {
       ) : null}
 
       {yamlResult ? (
-        <div className="mt-8">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-950">
-                生成的剧本 YAML
-              </h3>
-              {usageNote ? (
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                  {usageNote}
-                </p>
-              ) : null}
-            </div>
-          </div>
-          <textarea
-            value={yamlResult}
-            onChange={(event) => setYamlResult(event.target.value)}
-            className="mt-4 h-96 w-full resize-y rounded-lg border border-slate-200 bg-slate-950 p-4 font-mono text-sm leading-6 text-slate-50 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
-            spellCheck={false}
-          />
-        </div>
+        <YamlEditor initialYaml={yamlResult} usageNote={usageNote} />
       ) : null}
     </div>
   );

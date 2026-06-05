@@ -9,6 +9,9 @@ Novel2Script 是一个 AI 小说转剧本工具，目标是帮助小说作者将
 - 结构化 YAML 生成
 - YAML Schema 校验
 - 剧本导出
+- 在线编辑生成结果
+- 校验 YAML 是否符合 Schema
+- 一键导出 `.yaml` 文件
 
 ## 技术栈
 
@@ -61,12 +64,17 @@ http://localhost:3000
 - 已完成 OpenAI-compatible API 调用封装
 - 已完成小说到剧本 YAML 的核心生成链路
 - 已完成前端生成状态和结果展示
+- 已完成 YAML 编辑
+- 已完成 YAML Schema 校验
+- 已完成 YAML 导出
+- 已完成 YAML Schema 设计文档
 
 ## 后续计划
 
-- 设计剧本 YAML Schema
-- 下一阶段将实现 YAML Schema 校验
-- 下一阶段将实现 YAML 编辑和导出
+- 完善 README 和比赛提交材料
+- 优化页面体验
+- 录制 Demo 视频
+- 进行最终交付检查
 
 ## 原创功能说明
 
@@ -78,4 +86,4 @@ http://localhost:3000
 
 ## YAML Schema 文档
 
-待补充，后续将链接到 `docs/yaml-schema.md`。
+详见 [`docs/yaml-schema.md`](docs/yaml-schema.md)。

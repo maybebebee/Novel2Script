@@ -7,102 +7,96 @@ script:
     - 命运与选择
     - 记忆与秘密
     - 创作与现实
-  chapters:
-    - chapter_id: chapter_001
-      title: 雨夜来信
-      summary: 林晚在旧书店收到无名来信，信中警告她日出前不要打开阁楼的门。
-    - chapter_id: chapter_002
-      title: 阁楼脚步
-      summary: 午夜后阁楼响起脚步声，林晚听见门后有人翻动外祖父留下的剧本。
-    - chapter_id: chapter_003
-      title: 未写完的剧本
-      summary: 林晚推开阁楼门，看见剧本记录着她的言行，并发现一张诡异舞台照片。
-  characters:
-    - character_id: char_001
-      name: 林晚
-      role: 主角
-      description: 旧书店继承人，谨慎但无法抗拒真相。
-      motivation: 查清外祖父留下的阁楼秘密，摆脱被剧本操控的命运。
-      relationships:
-        - 与外祖父有深厚情感连接
-  locations:
-    - location_id: loc_001
-      name: 旧书店
-      description: 雨夜中的老书店，书架密集，通往阁楼的窄梯藏在店铺深处。
-    - location_id: loc_002
-      name: 阁楼
-      description: 尘封多年、泛着蓝光的房间，中央放着一本未写完的剧本。
-  scenes:
-    - scene_id: scene_001
-      chapter_id: chapter_001
-      title: 无名来信
-      location_id: loc_001
-      time: 雨夜打烊前
-      summary: 林晚收到警告信，并注意到阁楼门缝落下蓝色灰尘。
-      characters:
-        - char_001
-      beats:
-        - beat_id: beat_001
-          type: action
-          content: 林晚整理柜台时发现一封没有署名的旧信。
-          dialogues: []
-          transition: 她抬头看向通往阁楼的窄梯。
-        - beat_id: beat_002
-          type: dialogue
-          content: 林晚读出信上的警告，意识到阁楼并不平静。
-          dialogues:
-            - character_id: char_001
-              character_name: 林晚
-              emotion: 不安
-              line: 明天日出前，不要打开阁楼的门？
-          transition: 门缝中落下一点蓝色的灰。
-    - scene_id: scene_002
-      chapter_id: chapter_002
-      title: 门后的翻页声
-      location_id: loc_001
-      time: 午夜
-      summary: 林晚听见阁楼脚步和翻页声，想起外祖父提过的禁忌剧本。
-      characters:
-        - char_001
-      beats:
-        - beat_id: beat_003
-          type: action
-          content: 挂钟停在十二点十七分，阁楼传来脚步声。
-          dialogues: []
-          transition: 林晚握着手电走到楼梯口。
-        - beat_id: beat_004
-          type: dialogue
-          content: 门后传来翻页声，林晚低声质问里面的人。
-          dialogues:
-            - character_id: char_001
-              character_name: 林晚
-              emotion: 紧张
-              line: 谁在里面？
-          transition: 剧本似乎写下了她下一秒的话。
-    - scene_id: scene_003
-      chapter_id: chapter_003
-      title: 空白末页
-      location_id: loc_002
-      time: 午夜后
-      summary: 林晚进入阁楼，发现剧本和一张显示另一个自己的舞台照片。
-      characters:
-        - char_001
-      beats:
-        - beat_id: beat_005
-          type: action
-          content: 林晚推开阁楼门，看见黑色封面的剧本。
-          dialogues: []
-          transition: 她翻到最后一页。
-        - beat_id: beat_006
-          type: dialogue
-          content: 剧本最后一页仍是空白，照片中的另一个林晚坐在观众席。
-          dialogues:
-            - character_id: char_001
-              character_name: 林晚
-              emotion: 震惊
-              line: 这不可能是我。
-          transition: 书店外的雨声彻底消失。
-  metadata:
-    schema_version: "1.0.0"
-    generated_by: llm
-    notes: 示例 YAML，仅用于展示 Novel2Script 目标输出结构。
+chapters:
+  - chapter_id: chapter_001
+    title: 雨夜来信
+    summary: 林晚在旧书店收到无名来信，信中警告她日出前不要打开阁楼的门。
+  - chapter_id: chapter_002
+    title: 阁楼脚步
+    summary: 午夜后阁楼响起脚步声，林晚听见门后有人翻动外祖父留下的剧本。
+  - chapter_id: chapter_003
+    title: 未写完的剧本
+    summary: 林晚推开阁楼门，看见剧本记录着她的言行，并发现一张诡异舞台照片。
+characters:
+  - character_id: char_001
+    name: 林晚
+    role: 主角
+    description: 旧书店继承人，谨慎但无法抗拒真相。
+    motivation: 查清外祖父留下的阁楼秘密，摆脱被剧本操控的命运。
+    relationships:
+      - 与外祖父有深厚情感连接
+locations:
+  - location_id: loc_001
+    name: 旧书店
+    description: 雨夜中的老书店，书架密集，通往阁楼的窄梯藏在店铺深处。
+  - location_id: loc_002
+    name: 阁楼
+    description: 尘封多年、泛着蓝光的房间，中央放着一本未写完的剧本。
+scenes:
+  - scene_id: scene_001
+    chapter_id: chapter_001
+    title: 无名来信
+    location_id: loc_001
+    time: 雨夜打烊前
+    summary: 林晚收到警告信，并注意到阁楼门缝落下蓝色灰尘。
+    characters:
+      - char_001
+    beats:
+      - beat_id: beat_001
+        type: action
+        content: 林晚整理柜台时发现一封没有署名的旧信。
+      - beat_id: beat_002
+        type: dialogue
+        content: 林晚读出信上的警告，意识到阁楼并不平静。
+    dialogues:
+      - character_id: char_001
+        character_name: 林晚
+        emotion: 不安
+        line: 明天日出前，不要打开阁楼的门？
+    transition: 门缝中落下一点蓝色的灰。
+  - scene_id: scene_002
+    chapter_id: chapter_002
+    title: 门后的翻页声
+    location_id: loc_001
+    time: 午夜
+    summary: 林晚听见阁楼脚步和翻页声，想起外祖父提过的禁忌剧本。
+    characters:
+      - char_001
+    beats:
+      - beat_id: beat_003
+        type: action
+        content: 挂钟停在十二点十七分，阁楼传来脚步声。
+      - beat_id: beat_004
+        type: dialogue
+        content: 门后传来翻页声，林晚低声质问里面的人。
+    dialogues:
+      - character_id: char_001
+        character_name: 林晚
+        emotion: 紧张
+        line: 谁在里面？
+    transition: 剧本似乎写下了她下一秒的话。
+  - scene_id: scene_003
+    chapter_id: chapter_003
+    title: 空白末页
+    location_id: loc_002
+    time: 午夜后
+    summary: 林晚进入阁楼，发现剧本和一张显示另一个自己的舞台照片。
+    characters:
+      - char_001
+    beats:
+      - beat_id: beat_005
+        type: action
+        content: 林晚推开阁楼门，看见黑色封面的剧本。
+      - beat_id: beat_006
+        type: dialogue
+        content: 剧本最后一页仍是空白，照片中的另一个林晚坐在观众席。
+    dialogues:
+      - character_id: char_001
+        character_name: 林晚
+        emotion: 震惊
+        line: 这不可能是我。
+    transition: 书店外的雨声彻底消失。
+metadata:
+  schema_version: "1.0.0"
+  generated_by: llm
+  notes: 示例 YAML，仅用于展示 Novel2Script 目标输出结构。
