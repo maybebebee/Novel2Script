@@ -12,7 +12,7 @@ import {
 
 const sampleNovel = `第一章 雨夜来信
 
-林晚在旧书店打烊前收到一封没有署名的信。雨水沿着玻璃窗往下爬，街灯把店里的书架照得像一排沉默的人。信纸很旧，边缘有被火烤过的痕迹，上面只有一句话：明天日出前，不要打开阁楼的门。她抬头看向通往二楼的窄梯，忽然发现那扇多年没有动过的门缝里，正落下一点蓝色的灰。柜台下方的抽屉轻轻震了一下，像有人在里面敲了三声。
+林晚在旧书店打烊前收到一封没有署名的信。雨水沿着玻璃窗往下爬，街灯把店里的书架照得像一排沉默的人。信纸很旧，边缘有被火烫过的痕迹，上面只有一句话：明天日出前，不要打开阁楼的门。她抬头看向通往二楼的窄梯，忽然发现那扇多年没有动过的门缝里，正落下一点蓝色的灰。柜台下方的抽屉轻轻震了一下，像有人在里面敲了三声。
 
 第二章 阁楼脚步
 
@@ -20,7 +20,7 @@ const sampleNovel = `第一章 雨夜来信
 
 第三章 未写完的剧本
 
-她最终推开了门。阁楼中央的桌上放着一本黑色封面的剧本，第一页写着她刚刚说过的话，最后一页却仍是空白。窗外雨声突然消失，整座书店像被按下暂停键。林晚看见剧本旁边摆着一枚旧钥匙，钥匙下面压着一张照片。照片里，她站在陌生舞台中央，而观众中第一排坐着一个和她长得一模一样的人。那个人抬起头，隔着照片对她笑了笑。`;
+她最终推开了门。阁楼中央的桌上放着一本黑色封面的剧本，第一页写着她刚刚说过的话，最后一页却仍是空白。窗外雨声突然消失，整座书店像被按下暂停键。林晚看见剧本旁边摆着一枚旧钥匙，钥匙下面压着一张照片。照片里，她站在陌生舞台中央，而观众席第一排坐着一个和她长得一模一样的人。那个人抬起头，隔着照片对她笑了笑。`;
 
 function countWords(text: string) {
   return Array.from(text.replace(/\s/g, "")).length;
@@ -32,11 +32,12 @@ export function NovelInput() {
   const [scriptDocument, setScriptDocument] = useState<ScriptDocument | null>(
     null,
   );
+  const [isYamlVisible, setIsYamlVisible] = useState(false);
   const [usageNote, setUsageNote] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [previewError, setPreviewError] = useState("");
-  const [isScriptEditorOpen, setIsScriptEditorOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+
   const chapterResult = useMemo(() => detectChapters(text), [text]);
   const wordCount = useMemo(() => countWords(text), [text]);
   const hasEnoughChapters = chapterResult.count >= 3;
@@ -45,8 +46,32 @@ export function NovelInput() {
     chapterResult.count === 0
       ? "未检测到章节标题，请使用“第一章”“第1章”或“Chapter 1”等格式"
       : hasEnoughChapters
-        ? `已检测到 ${chapterResult.count} 个章节，可以开始生成剧本`
+        ? `已检测到 ${chapterResult.count} 个章节，可以生成可修改剧本`
         : `当前检测到 ${chapterResult.count} 个章节，请至少输入 3 个章节以上的小说文本`;
+
+  function resetGeneratedResult() {
+    setYamlText("");
+    setScriptDocument(null);
+    setIsYamlVisible(false);
+    setUsageNote("");
+    setErrorMessage("");
+    setPreviewError("");
+  }
+
+  function handleTextChange(value: string) {
+    setText(value);
+    resetGeneratedResult();
+  }
+
+  function handleClearText() {
+    setText("");
+    resetGeneratedResult();
+  }
+
+  function handleLoadSample() {
+    setText(sampleNovel);
+    resetGeneratedResult();
+  }
 
   async function handleGenerateClick() {
     if (!hasEnoughChapters || isGenerating) {
@@ -58,8 +83,8 @@ export function NovelInput() {
     setUsageNote("");
     setYamlText("");
     setScriptDocument(null);
+    setIsYamlVisible(false);
     setPreviewError("");
-    setIsScriptEditorOpen(false);
 
     try {
       const response = await fetch("/api/generate", {
@@ -85,58 +110,43 @@ export function NovelInput() {
         throw new Error("生成结果为空，请稍后重试。");
       }
 
-      setYamlText(data.yaml);
-      setUsageNote(data.usageNote || "");
-
       const parsed = parseScriptDocumentFromYaml(data.yaml);
+
+      setUsageNote(data.usageNote || "");
 
       if (parsed.ok) {
         setScriptDocument(parsed.document);
+        setYamlText(scriptDocumentToYaml(parsed.document));
       } else {
+        setYamlText(data.yaml);
+        setIsYamlVisible(true);
         setPreviewError(
-          `YAML 已生成，但暂时无法打开剧本修改窗口：${parsed.error}`,
+          `YAML 已生成，但暂时无法展示中文剧本修改页：${parsed.error}`,
         );
       }
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "生成剧本 YAML 失败，请稍后重试。",
+        error instanceof Error ? error.message : "生成剧本失败，请稍后重试。",
       );
     } finally {
       setIsGenerating(false);
     }
   }
 
-  function resetGeneratedResult() {
-    setYamlText("");
-    setScriptDocument(null);
-    setUsageNote("");
-    setErrorMessage("");
-    setPreviewError("");
-    setIsScriptEditorOpen(false);
-  }
-
-  function handleTextChange(value: string) {
-    setText(value);
-    setErrorMessage("");
-  }
-
-  function handleClearText() {
-    setText("");
-    resetGeneratedResult();
-  }
-
-  function handleLoadSample() {
-    setText(sampleNovel);
-    resetGeneratedResult();
-  }
-
   function handlePreviewChange(nextDocument: ScriptDocument) {
     setScriptDocument(nextDocument);
     setYamlText(scriptDocumentToYaml(nextDocument));
     setPreviewError("");
-    setIsScriptEditorOpen(false);
+  }
+
+  function handleGenerateYamlFromPreview() {
+    if (!scriptDocument) {
+      return;
+    }
+
+    setYamlText(scriptDocumentToYaml(scriptDocument));
+    setIsYamlVisible(true);
+    setPreviewError("");
   }
 
   function handleYamlTextChange(nextYaml: string) {
@@ -144,17 +154,17 @@ export function NovelInput() {
     setPreviewError("");
   }
 
-  function handleOpenScriptEditor() {
+  function handleSyncPreviewFromYaml() {
     const parsed = parseScriptDocumentFromYaml(yamlText);
 
     if (parsed.ok) {
       setScriptDocument(parsed.document);
+      setYamlText(scriptDocumentToYaml(parsed.document));
       setPreviewError("");
-      setIsScriptEditorOpen(true);
       return;
     }
 
-    setPreviewError(`无法打开剧本修改窗口：${parsed.error}`);
+    setPreviewError(`无法同步到中文剧本修改页：${parsed.error}`);
   }
 
   return (
@@ -168,7 +178,7 @@ export function NovelInput() {
             小说文本输入区
           </label>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            粘贴包含章节标题的小说文本，系统会自动检测章节数量，并在满足 3 章后开放生成。
+            粘贴包含章节标题的小说文本。系统会先生成适合编剧修改的中文剧本，再由剧本稿同步生成 YAML。
           </p>
         </div>
 
@@ -247,11 +257,11 @@ export function NovelInput() {
           disabled={!hasEnoughChapters || isGenerating}
           className="rounded-lg bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
         >
-          {isGenerating ? "正在生成剧本..." : "生成剧本 YAML"}
+          {isGenerating ? "正在生成可修改剧本..." : "生成可修改剧本"}
         </button>
         {isGenerating ? (
           <p className="text-sm font-medium text-slate-700">
-            AI 正在分析章节、人物、地点、场景、对白和画面细节，请稍候。
+            AI 正在整理章节、人物、地点、场景、对白和画面细节，请稍候。
           </p>
         ) : null}
       </div>
@@ -262,7 +272,7 @@ export function NovelInput() {
         </div>
       ) : null}
 
-      {yamlText ? (
+      {scriptDocument || yamlText ? (
         <div className="mt-8 space-y-8">
           {previewError ? (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800">
@@ -270,18 +280,20 @@ export function NovelInput() {
             </div>
           ) : null}
 
-          <YamlEditor
-            yamlText={yamlText}
-            usageNote={usageNote}
-            onYamlTextChange={handleYamlTextChange}
-            onOpenScriptEditor={handleOpenScriptEditor}
-          />
-
-          {scriptDocument && isScriptEditorOpen ? (
+          {scriptDocument ? (
             <ScriptPreview
               document={scriptDocument}
-              onApply={handlePreviewChange}
-              onClose={() => setIsScriptEditorOpen(false)}
+              onChange={handlePreviewChange}
+              onGenerateYaml={handleGenerateYamlFromPreview}
+            />
+          ) : null}
+
+          {isYamlVisible ? (
+            <YamlEditor
+              yamlText={yamlText}
+              usageNote={usageNote}
+              onYamlTextChange={handleYamlTextChange}
+              onOpenScriptEditor={handleSyncPreviewFromYaml}
             />
           ) : null}
         </div>

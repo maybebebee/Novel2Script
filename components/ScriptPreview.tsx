@@ -1,946 +1,463 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
+import { SceneCardEditor } from "@/components/SceneCardEditor";
+import type { ValidationIssue } from "@/lib/schema";
 import type {
-  Beat,
   Character,
-  CharacterAction,
-  Dialogue,
   Location,
   ScriptDocument,
   Scene,
 } from "@/lib/scriptDocument";
 import { getCharacterName, getLocationName } from "@/lib/scriptDocument";
+import { scriptDocumentToYaml } from "@/lib/scriptDocument";
 
 type ScriptPreviewProps = {
   document: ScriptDocument;
-  onApply: (nextDocument: ScriptDocument) => void;
-  onClose: () => void;
+  onChange: (nextDocument: ScriptDocument) => void;
+  onGenerateYaml: () => void;
 };
 
-type DetailTab = "characters" | "locations" | "notes";
+type ValidationState = {
+  status: "idle" | "valid" | "invalid";
+  issues: ValidationIssue[];
+  message: string;
+};
 
-function cloneDocument(document: ScriptDocument): ScriptDocument {
-  return JSON.parse(JSON.stringify(document)) as ScriptDocument;
-}
-
-function listFromText(value: string) {
+function splitListText(value: string) {
   return value
-    .split(/\r?\n/)
+    .split(/[，、\n]/)
     .map((item) => item.trim())
     .filter(Boolean);
 }
 
-function listToText(value: string[]) {
-  return value.join("\n");
+function joinListText(value: string[]) {
+  return value.join("、");
 }
 
-function FieldLabel({
-  children,
-  path,
-}: {
-  children: React.ReactNode;
-  path?: string;
-}) {
-  return (
-    <label className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-700">
-      <span>{children}</span>
-      {path ? (
-        <span className="font-mono text-xs font-normal text-slate-400">
-          {path}
-        </span>
-      ) : null}
-    </label>
-  );
+function updateByIndex<T>(items: T[], index: number, nextItem: T) {
+  return items.map((item, itemIndex) => (itemIndex === index ? nextItem : item));
 }
 
-function EmptyState({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-      {children}
-    </p>
+function getChapterScenes(document: ScriptDocument) {
+  const knownChapterIds = new Set(
+    document.chapters.map((chapter) => chapter.chapter_id),
   );
+  const grouped = document.chapters.map((chapter) => ({
+    chapter,
+    scenes: document.scenes
+      .map((scene, sceneIndex) => ({ scene, sceneIndex }))
+      .filter(({ scene }) => scene.chapter_id === chapter.chapter_id),
+  }));
+  const unassignedScenes = document.scenes
+    .map((scene, sceneIndex) => ({ scene, sceneIndex }))
+    .filter(({ scene }) => !knownChapterIds.has(scene.chapter_id));
+
+  if (unassignedScenes.length === 0) {
+    return grouped;
+  }
+
+  return [
+    ...grouped,
+    {
+      chapter: {
+        chapter_id: "__unassigned",
+        title: "未归入章节",
+        summary: "这些场景还没有匹配到章节。",
+      },
+      scenes: unassignedScenes,
+    },
+  ];
 }
+
+const quietInput =
+  "mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal outline-none transition focus:border-teal-600 focus:bg-teal-50/40";
+const quietTextarea =
+  "mt-2 w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal leading-6 outline-none transition focus:border-teal-600 focus:bg-teal-50/40";
 
 export function ScriptPreview({
   document,
-  onApply,
-  onClose,
+  onChange,
+  onGenerateYaml,
 }: ScriptPreviewProps) {
-  const [draft, setDraft] = useState<ScriptDocument>(() =>
-    cloneDocument(document),
-  );
-  const [selectedSceneIndex, setSelectedSceneIndex] = useState(0);
-  const [detailTab, setDetailTab] = useState<DetailTab>("characters");
-
-  useEffect(() => {
-    setDraft(cloneDocument(document));
-    setSelectedSceneIndex(0);
-    setDetailTab("characters");
-  }, [document]);
-
-  const selectedScene = useMemo(
-    () => draft.scenes[selectedSceneIndex],
-    [draft.scenes, selectedSceneIndex],
-  );
+  const [isValidating, setIsValidating] = useState(false);
+  const [validation, setValidation] = useState<ValidationState>({
+    status: "idle",
+    issues: [],
+    message: "",
+  });
 
   function updateScriptField<K extends keyof ScriptDocument["script"]>(
     key: K,
     value: ScriptDocument["script"][K],
   ) {
-    setDraft((current) => ({
-      ...current,
+    onChange({
+      ...document,
       script: {
-        ...current.script,
+        ...document.script,
         [key]: value,
       },
-    }));
-  }
-
-  function updateCharacter(index: number, nextCharacter: Character) {
-    setDraft((current) => ({
-      ...current,
-      characters: current.characters.map((character, characterIndex) =>
-        characterIndex === index ? nextCharacter : character,
-      ),
-    }));
-  }
-
-  function updateLocation(index: number, nextLocation: Location) {
-    setDraft((current) => ({
-      ...current,
-      locations: current.locations.map((location, locationIndex) =>
-        locationIndex === index ? nextLocation : location,
-      ),
-    }));
+    });
   }
 
   function updateMetadataNotes(notes: string) {
-    setDraft((current) => ({
-      ...current,
+    onChange({
+      ...document,
       metadata: {
-        ...current.metadata,
+        ...document.metadata,
         notes,
       },
-    }));
-  }
-
-  function updateScene(nextScene: Scene) {
-    setDraft((current) => ({
-      ...current,
-      scenes: current.scenes.map((scene, index) =>
-        index === selectedSceneIndex ? nextScene : scene,
-      ),
-    }));
-  }
-
-  function updateSceneField<K extends keyof Scene>(key: K, value: Scene[K]) {
-    if (!selectedScene) {
-      return;
-    }
-
-    updateScene({
-      ...selectedScene,
-      [key]: value,
     });
   }
 
-  function updateVisualField(
-    key: keyof Scene["visual"],
-    value: string | string[],
-  ) {
-    if (!selectedScene) {
-      return;
-    }
-
-    updateScene({
-      ...selectedScene,
-      visual: {
-        ...selectedScene.visual,
-        [key]: value,
-      },
+  function updateCharacter(index: number, nextCharacter: Character) {
+    onChange({
+      ...document,
+      characters: updateByIndex(document.characters, index, nextCharacter),
     });
   }
 
-  function updateActionLine(index: number, value: string) {
-    if (!selectedScene) {
-      return;
-    }
-
-    updateScene({
-      ...selectedScene,
-      action_lines: selectedScene.action_lines.map((line, lineIndex) =>
-        lineIndex === index ? value : line,
-      ),
+  function updateLocation(index: number, nextLocation: Location) {
+    onChange({
+      ...document,
+      locations: updateByIndex(document.locations, index, nextLocation),
     });
   }
 
-  function addActionLine() {
-    if (!selectedScene) {
-      return;
-    }
-
-    updateScene({
-      ...selectedScene,
-      action_lines: [...selectedScene.action_lines, ""],
+  function updateScene(index: number, nextScene: Scene) {
+    onChange({
+      ...document,
+      scenes: updateByIndex(document.scenes, index, nextScene),
     });
   }
 
-  function removeActionLine(index: number) {
-    if (!selectedScene) {
-      return;
-    }
-
-    updateScene({
-      ...selectedScene,
-      action_lines: selectedScene.action_lines.filter(
-        (_line, lineIndex) => lineIndex !== index,
-      ),
+  async function handleValidateSchema() {
+    setIsValidating(true);
+    setValidation({
+      status: "idle",
+      issues: [],
+      message: "",
     });
-  }
 
-  function updateBeat<K extends keyof Pick<Beat, "type" | "content">>(
-    beatIndex: number,
-    key: K,
-    value: Beat[K],
-  ) {
-    if (!selectedScene) {
-      return;
+    try {
+      const response = await fetch("/api/validate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          yamlText: scriptDocumentToYaml(document),
+        }),
+      });
+      const data = (await response.json()) as {
+        valid?: boolean;
+        issues?: ValidationIssue[];
+      };
+      const issues = data.issues || [];
+
+      if (data.valid) {
+        setValidation({
+          status: "valid",
+          issues: [],
+          message: "Schema 校验通过，当前修改稿可以生成 YAML。",
+        });
+      } else {
+        setValidation({
+          status: "invalid",
+          issues,
+          message: "Schema 校验未通过，请根据以下问题继续修改。",
+        });
+      }
+    } catch {
+      setValidation({
+        status: "invalid",
+        issues: [
+          {
+            path: "network",
+            message: "校验请求失败，请稍后重试。",
+          },
+        ],
+        message: "Schema 校验未通过，请根据以下问题继续修改。",
+      });
+    } finally {
+      setIsValidating(false);
     }
-
-    updateScene({
-      ...selectedScene,
-      beats: selectedScene.beats.map((beat, index) =>
-        index === beatIndex
-          ? {
-              ...beat,
-              [key]: value,
-            }
-          : beat,
-      ),
-    });
-  }
-
-  function updateCharacterAction<K extends keyof CharacterAction>(
-    beatIndex: number,
-    actionIndex: number,
-    key: K,
-    value: CharacterAction[K],
-  ) {
-    if (!selectedScene) {
-      return;
-    }
-
-    updateScene({
-      ...selectedScene,
-      beats: selectedScene.beats.map((beat, index) =>
-        index === beatIndex
-          ? {
-              ...beat,
-              character_actions: beat.character_actions.map(
-                (characterAction, currentActionIndex) =>
-                  currentActionIndex === actionIndex
-                    ? {
-                        ...characterAction,
-                        [key]: value,
-                      }
-                    : characterAction,
-              ),
-            }
-          : beat,
-      ),
-    });
-  }
-
-  function addCharacterAction(beatIndex: number) {
-    if (!selectedScene) {
-      return;
-    }
-
-    const firstCharacterId = selectedScene.characters[0] || "";
-
-    updateScene({
-      ...selectedScene,
-      beats: selectedScene.beats.map((beat, index) =>
-        index === beatIndex
-          ? {
-              ...beat,
-              character_actions: [
-                ...beat.character_actions,
-                {
-                  character_id: firstCharacterId,
-                  character_name: firstCharacterId
-                    ? getCharacterName(draft, firstCharacterId)
-                    : "",
-                  action: "",
-                },
-              ],
-            }
-          : beat,
-      ),
-    });
-  }
-
-  function removeCharacterAction(beatIndex: number, actionIndex: number) {
-    if (!selectedScene) {
-      return;
-    }
-
-    updateScene({
-      ...selectedScene,
-      beats: selectedScene.beats.map((beat, index) =>
-        index === beatIndex
-          ? {
-              ...beat,
-              character_actions: beat.character_actions.filter(
-                (_action, currentActionIndex) =>
-                  currentActionIndex !== actionIndex,
-              ),
-            }
-          : beat,
-      ),
-    });
-  }
-
-  function updateDialogue<K extends keyof Dialogue>(
-    dialogueIndex: number,
-    key: K,
-    value: Dialogue[K],
-  ) {
-    if (!selectedScene) {
-      return;
-    }
-
-    updateScene({
-      ...selectedScene,
-      dialogues: selectedScene.dialogues.map((dialogue, index) =>
-        index === dialogueIndex
-          ? {
-              ...dialogue,
-              [key]: value,
-            }
-          : dialogue,
-      ),
-    });
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/60 px-4 py-6">
-      <div className="mx-auto flex h-full max-w-7xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl">
-        <div className="flex flex-col gap-4 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">
-              Script Workspace
-            </p>
+    <section className="rounded-lg border border-slate-200 bg-[#fbfaf6] p-6 shadow-sm">
+      <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">
+            Script Draft
+          </p>
+          <h3 className="mt-2 text-xl font-semibold text-slate-950">
+            中文剧本修改页
+          </h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+            这里先以编剧熟悉的剧本文稿方式展示。每一处修改都会同步到底层结构，确认后再生成 YAML。
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onGenerateYaml}
+          className="rounded-lg bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
+        >
+          生成 YAML
+        </button>
+      </div>
+
+      <div className="mt-6 rounded-lg border border-slate-200 bg-white p-5">
+        <h4 className="text-base font-semibold text-slate-950">剧本信息</h4>
+        <div className="mt-4 grid gap-4">
+          <label className="text-sm font-semibold text-slate-700">
+            剧本标题
             <input
-              value={draft.script.title}
+              value={document.script.title}
               onChange={(event) =>
                 updateScriptField("title", event.target.value)
               }
-              className="mt-1 w-full border-0 bg-transparent text-2xl font-semibold text-slate-950 outline-none"
+              className={quietInput}
             />
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              取消
-            </button>
-            <button
-              type="button"
-              onClick={() => onApply(draft)}
-              className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
-            >
-              应用修改到 YAML
-            </button>
-          </div>
-        </div>
-
-        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[280px_1fr]">
-          <aside className="border-b border-slate-200 bg-slate-50 p-4 lg:border-b-0 lg:border-r">
-            <div>
-              <FieldLabel path="script.logline">一句话梗概</FieldLabel>
-              <textarea
-                value={draft.script.logline}
-                onChange={(event) =>
-                  updateScriptField("logline", event.target.value)
-                }
-                className="mt-2 h-28 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-teal-600"
-              />
-            </div>
-
-            <div className="mt-4">
-              <FieldLabel path="script.themes">主题</FieldLabel>
-              <textarea
-                value={listToText(draft.script.themes)}
-                onChange={(event) =>
-                  updateScriptField("themes", listFromText(event.target.value))
-                }
-                className="mt-2 h-20 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-teal-600"
-              />
-            </div>
-
-            <div className="mt-6">
-              <FieldLabel>场景目录</FieldLabel>
-              <div className="mt-2 space-y-2">
-                {draft.scenes.map((scene, index) => (
-                  <button
-                    key={scene.scene_id}
-                    type="button"
-                    onClick={() => setSelectedSceneIndex(index)}
-                    className={`w-full rounded-lg border px-3 py-3 text-left text-sm transition ${
-                      index === selectedSceneIndex
-                        ? "border-teal-600 bg-white text-slate-950 shadow-sm"
-                        : "border-transparent bg-transparent text-slate-600 hover:bg-white"
-                    }`}
-                  >
-                    <span className="block font-semibold">
-                      场景 {index + 1}
-                    </span>
-                    <span className="mt-1 block truncate">{scene.title}</span>
-                    <span className="mt-1 block truncate text-xs text-slate-400">
-                      {getLocationName(draft, scene.location_id)} · {scene.time}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </aside>
-
-          <main className="min-h-0 overflow-y-auto bg-[#fbfaf6] p-4 sm:p-6">
-            {selectedScene ? (
-              <div className="mx-auto max-w-4xl space-y-6">
-                <section className="rounded-lg bg-white px-6 py-8 shadow-sm sm:px-10">
-                  <p className="text-center text-sm font-semibold text-slate-500">
-                    场景 {selectedSceneIndex + 1}
-                  </p>
-                  <input
-                    value={selectedScene.title}
-                    onChange={(event) =>
-                      updateSceneField("title", event.target.value)
-                    }
-                    className="mt-2 w-full border-0 bg-transparent text-center text-3xl font-semibold text-slate-950 outline-none"
-                  />
-
-                  <div className="mt-5 grid gap-3 text-sm sm:grid-cols-3">
-                    <div className="rounded-lg bg-slate-50 px-3 py-2 text-slate-600">
-                      地点：{getLocationName(draft, selectedScene.location_id)}
-                    </div>
-                    <input
-                      value={selectedScene.time}
-                      onChange={(event) =>
-                        updateSceneField("time", event.target.value)
-                      }
-                      className="rounded-lg border-0 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none"
-                    />
-                    <div className="rounded-lg bg-slate-50 px-3 py-2 text-slate-600">
-                      {selectedScene.characters
-                        .map((characterId) =>
-                          getCharacterName(draft, characterId),
-                        )
-                        .join("、") || "未标注人物"}
-                    </div>
-                  </div>
-
-                  <div className="mt-8">
-                    <FieldLabel
-                      path={`scenes[${selectedSceneIndex}].screenplay_text`}
-                    >
-                      剧本正文
-                    </FieldLabel>
-                    <textarea
-                      value={selectedScene.screenplay_text}
-                      onChange={(event) =>
-                        updateSceneField("screenplay_text", event.target.value)
-                      }
-                      className="mt-3 min-h-72 w-full resize-y border-0 bg-transparent text-base leading-8 text-slate-950 outline-none"
-                      placeholder="这里是适合剧作家阅读和直接修改的完整场景正文。"
-                    />
-                  </div>
-                </section>
-
-                <section className="rounded-lg bg-white px-6 py-6 shadow-sm sm:px-10">
-                  <FieldLabel path={`scenes[${selectedSceneIndex}].summary`}>
-                    场景摘要
-                  </FieldLabel>
-                  <textarea
-                    value={selectedScene.summary}
-                    onChange={(event) =>
-                      updateSceneField("summary", event.target.value)
-                    }
-                    className="mt-3 h-20 w-full resize-y rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm leading-6 outline-none focus:border-teal-600"
-                  />
-                </section>
-
-                <section className="rounded-lg bg-white px-6 py-6 shadow-sm sm:px-10">
-                  <h3 className="text-lg font-semibold text-slate-950">
-                    画面与动作细节
-                  </h3>
-                  <div className="mt-4 grid gap-5 md:grid-cols-2">
-                    <div>
-                      <FieldLabel
-                        path={`scenes[${selectedSceneIndex}].visual.atmosphere`}
-                      >
-                        画面氛围
-                      </FieldLabel>
-                      <textarea
-                        value={selectedScene.visual.atmosphere}
-                        onChange={(event) =>
-                          updateVisualField("atmosphere", event.target.value)
-                        }
-                        className="mt-2 h-24 w-full resize-y rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm leading-6 outline-none focus:border-teal-600"
-                      />
-                    </div>
-                    <div>
-                      <FieldLabel
-                        path={`scenes[${selectedSceneIndex}].visual.key_props`}
-                      >
-                        关键道具
-                      </FieldLabel>
-                      <textarea
-                        value={listToText(selectedScene.visual.key_props)}
-                        onChange={(event) =>
-                          updateVisualField(
-                            "key_props",
-                            listFromText(event.target.value),
-                          )
-                        }
-                        className="mt-2 h-24 w-full resize-y rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm leading-6 outline-none focus:border-teal-600"
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-5">
-                    <FieldLabel
-                      path={`scenes[${selectedSceneIndex}].visual.sensory_details`}
-                    >
-                      感官细节
-                    </FieldLabel>
-                    <textarea
-                      value={listToText(selectedScene.visual.sensory_details)}
-                      onChange={(event) =>
-                        updateVisualField(
-                          "sensory_details",
-                          listFromText(event.target.value),
-                        )
-                      }
-                      className="mt-2 h-24 w-full resize-y rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm leading-6 outline-none focus:border-teal-600"
-                    />
-                  </div>
-
-                  <div className="mt-6">
-                    <div className="flex items-center justify-between gap-3">
-                      <FieldLabel
-                        path={`scenes[${selectedSceneIndex}].action_lines`}
-                      >
-                        动作线
-                      </FieldLabel>
-                      <button
-                        type="button"
-                        onClick={addActionLine}
-                        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-                      >
-                        添加动作
-                      </button>
-                    </div>
-                    <div className="mt-3 space-y-3">
-                      {selectedScene.action_lines.length > 0 ? (
-                        selectedScene.action_lines.map((line, index) => (
-                          <div
-                            key={`${selectedScene.scene_id}-action-${index}`}
-                            className="flex gap-2"
-                          >
-                            <textarea
-                              value={line}
-                              onChange={(event) =>
-                                updateActionLine(index, event.target.value)
-                              }
-                              className="min-h-16 flex-1 resize-y rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm leading-6 outline-none focus:border-teal-600"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeActionLine(index)}
-                              className="h-10 rounded-lg border border-slate-300 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
-                            >
-                              删除
-                            </button>
-                          </div>
-                        ))
-                      ) : (
-                        <EmptyState>当前场景还没有动作线。</EmptyState>
-                      )}
-                    </div>
-                  </div>
-                </section>
-
-                <section className="rounded-lg bg-white px-6 py-6 shadow-sm sm:px-10">
-                  <h3 className="text-lg font-semibold text-slate-950">
-                    剧情节拍
-                  </h3>
-                  <div className="mt-4 space-y-5">
-                    {selectedScene.beats.map((beat, beatIndex) => (
-                      <div
-                        key={beat.beat_id}
-                        className="border-l-2 border-teal-100 pl-4"
-                      >
-                        <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
-                          <div>
-                            <FieldLabel
-                              path={`scenes[${selectedSceneIndex}].beats[${beatIndex}].type`}
-                            >
-                              类型
-                            </FieldLabel>
-                            <input
-                              value={beat.type}
-                              onChange={(event) =>
-                                updateBeat(
-                                  beatIndex,
-                                  "type",
-                                  event.target.value,
-                                )
-                              }
-                              className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-teal-600"
-                            />
-                          </div>
-                          <div>
-                            <FieldLabel
-                              path={`scenes[${selectedSceneIndex}].beats[${beatIndex}].content`}
-                            >
-                              节拍内容
-                            </FieldLabel>
-                            <textarea
-                              value={beat.content}
-                              onChange={(event) =>
-                                updateBeat(
-                                  beatIndex,
-                                  "content",
-                                  event.target.value,
-                                )
-                              }
-                              className="mt-2 h-20 w-full resize-y rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm leading-6 outline-none focus:border-teal-600"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="mt-3">
-                          <div className="flex items-center justify-between gap-3">
-                            <FieldLabel
-                              path={`scenes[${selectedSceneIndex}].beats[${beatIndex}].character_actions`}
-                            >
-                              人物动作
-                            </FieldLabel>
-                            <button
-                              type="button"
-                              onClick={() => addCharacterAction(beatIndex)}
-                              className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-                            >
-                              添加动作
-                            </button>
-                          </div>
-                          <div className="mt-2 space-y-2">
-                            {beat.character_actions.length > 0 ? (
-                              beat.character_actions.map(
-                                (characterAction, actionIndex) => (
-                                  <div
-                                    key={`${beat.beat_id}-character-action-${actionIndex}`}
-                                    className="grid gap-2 sm:grid-cols-[120px_1fr_auto]"
-                                  >
-                                    <input
-                                      value={characterAction.character_name}
-                                      onChange={(event) =>
-                                        updateCharacterAction(
-                                          beatIndex,
-                                          actionIndex,
-                                          "character_name",
-                                          event.target.value,
-                                        )
-                                      }
-                                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-teal-600"
-                                    />
-                                    <input
-                                      value={characterAction.action}
-                                      onChange={(event) =>
-                                        updateCharacterAction(
-                                          beatIndex,
-                                          actionIndex,
-                                          "action",
-                                          event.target.value,
-                                        )
-                                      }
-                                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-teal-600"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        removeCharacterAction(
-                                          beatIndex,
-                                          actionIndex,
-                                        )
-                                      }
-                                      className="rounded-lg border border-slate-300 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
-                                    >
-                                      删除
-                                    </button>
-                                  </div>
-                                ),
-                              )
-                            ) : (
-                              <EmptyState>当前节拍没有人物动作。</EmptyState>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="rounded-lg bg-white px-6 py-6 shadow-sm sm:px-10">
-                  <h3 className="text-lg font-semibold text-slate-950">
-                    对白
-                  </h3>
-                  <div className="mt-4 space-y-6">
-                    {selectedScene.dialogues.length > 0 ? (
-                      selectedScene.dialogues.map((dialogue, dialogueIndex) => (
-                        <div
-                          key={`${dialogue.character_id}-${dialogueIndex}`}
-                          className="grid gap-3 border-l-2 border-slate-100 pl-4"
-                        >
-                          <div className="grid gap-3 sm:grid-cols-3">
-                            <div>
-                              <FieldLabel
-                                path={`scenes[${selectedSceneIndex}].dialogues[${dialogueIndex}].character_name`}
-                              >
-                                角色
-                              </FieldLabel>
-                              <input
-                                value={dialogue.character_name}
-                                onChange={(event) =>
-                                  updateDialogue(
-                                    dialogueIndex,
-                                    "character_name",
-                                    event.target.value,
-                                  )
-                                }
-                                className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-teal-600"
-                              />
-                            </div>
-                            <div>
-                              <FieldLabel
-                                path={`scenes[${selectedSceneIndex}].dialogues[${dialogueIndex}].emotion`}
-                              >
-                                情绪
-                              </FieldLabel>
-                              <input
-                                value={dialogue.emotion}
-                                onChange={(event) =>
-                                  updateDialogue(
-                                    dialogueIndex,
-                                    "emotion",
-                                    event.target.value,
-                                  )
-                                }
-                                className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-teal-600"
-                              />
-                            </div>
-                            <div>
-                              <FieldLabel
-                                path={`scenes[${selectedSceneIndex}].dialogues[${dialogueIndex}].action`}
-                              >
-                                说话动作
-                              </FieldLabel>
-                              <input
-                                value={dialogue.action}
-                                onChange={(event) =>
-                                  updateDialogue(
-                                    dialogueIndex,
-                                    "action",
-                                    event.target.value,
-                                  )
-                                }
-                                className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-teal-600"
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <FieldLabel
-                              path={`scenes[${selectedSceneIndex}].dialogues[${dialogueIndex}].line`}
-                            >
-                              台词
-                            </FieldLabel>
-                            <textarea
-                              value={dialogue.line}
-                              onChange={(event) =>
-                                updateDialogue(
-                                  dialogueIndex,
-                                  "line",
-                                  event.target.value,
-                                )
-                              }
-                              className="mt-2 h-20 w-full resize-y rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm leading-6 outline-none focus:border-teal-600"
-                            />
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <EmptyState>当前场景没有对白。</EmptyState>
-                    )}
-                  </div>
-                </section>
-
-                <section className="rounded-lg bg-white px-6 py-6 shadow-sm sm:px-10">
-                  <FieldLabel path={`scenes[${selectedSceneIndex}].transition`}>
-                    转场
-                  </FieldLabel>
-                  <textarea
-                    value={selectedScene.transition}
-                    onChange={(event) =>
-                      updateSceneField("transition", event.target.value)
-                    }
-                    className="mt-3 h-16 w-full resize-y rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm leading-6 outline-none focus:border-teal-600"
-                  />
-                </section>
-              </div>
-            ) : null}
-
-            <div className="mx-auto mt-6 max-w-4xl rounded-lg bg-white p-4 shadow-sm">
-              <div className="flex flex-wrap gap-2">
-                {[
-                  ["characters", "人物设定"],
-                  ["locations", "地点设定"],
-                  ["notes", "备注"],
-                ].map(([key, label]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setDetailTab(key as DetailTab)}
-                    className={`rounded-lg px-3 py-2 text-sm font-semibold ${
-                      detailTab === key
-                        ? "bg-slate-950 text-white"
-                        : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              {detailTab === "characters" ? (
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  {draft.characters.map((character, index) => (
-                    <div
-                      key={character.character_id}
-                      className="rounded-lg bg-slate-50 p-4"
-                    >
-                      <FieldLabel path={`characters[${index}].name`}>
-                        人物名
-                      </FieldLabel>
-                      <input
-                        value={character.name}
-                        onChange={(event) =>
-                          updateCharacter(index, {
-                            ...character,
-                            name: event.target.value,
-                          })
-                        }
-                        className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-teal-600"
-                      />
-                      <FieldLabel path={`characters[${index}].role`}>
-                        角色功能
-                      </FieldLabel>
-                      <input
-                        value={character.role}
-                        onChange={(event) =>
-                          updateCharacter(index, {
-                            ...character,
-                            role: event.target.value,
-                          })
-                        }
-                        className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-600"
-                      />
-                      <FieldLabel path={`characters[${index}].description`}>
-                        描述
-                      </FieldLabel>
-                      <textarea
-                        value={character.description}
-                        onChange={(event) =>
-                          updateCharacter(index, {
-                            ...character,
-                            description: event.target.value,
-                          })
-                        }
-                        className="mt-2 h-16 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-teal-600"
-                      />
-                      <FieldLabel path={`characters[${index}].motivation`}>
-                        动机
-                      </FieldLabel>
-                      <textarea
-                        value={character.motivation}
-                        onChange={(event) =>
-                          updateCharacter(index, {
-                            ...character,
-                            motivation: event.target.value,
-                          })
-                        }
-                        className="mt-2 h-16 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-teal-600"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-
-              {detailTab === "locations" ? (
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  {draft.locations.map((location, index) => (
-                    <div
-                      key={location.location_id}
-                      className="rounded-lg bg-slate-50 p-4"
-                    >
-                      <FieldLabel path={`locations[${index}].name`}>
-                        地点名
-                      </FieldLabel>
-                      <input
-                        value={location.name}
-                        onChange={(event) =>
-                          updateLocation(index, {
-                            ...location,
-                            name: event.target.value,
-                          })
-                        }
-                        className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-teal-600"
-                      />
-                      <FieldLabel path={`locations[${index}].description`}>
-                        地点描述
-                      </FieldLabel>
-                      <textarea
-                        value={location.description}
-                        onChange={(event) =>
-                          updateLocation(index, {
-                            ...location,
-                            description: event.target.value,
-                          })
-                        }
-                        className="mt-2 h-20 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-teal-600"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-
-              {detailTab === "notes" ? (
-                <div className="mt-4">
-                  <FieldLabel path="metadata.notes">备注</FieldLabel>
-                  <textarea
-                    value={draft.metadata.notes}
-                    onChange={(event) => updateMetadataNotes(event.target.value)}
-                    className="mt-2 h-24 w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-sm leading-6 outline-none focus:border-teal-600"
-                  />
-                </div>
-              ) : null}
-            </div>
-          </main>
+          </label>
+          <label className="text-sm font-semibold text-slate-700">
+            一句话梗概
+            <textarea
+              value={document.script.logline}
+              onChange={(event) =>
+                updateScriptField("logline", event.target.value)
+              }
+              className={`${quietTextarea} h-20`}
+            />
+          </label>
+          <label className="text-sm font-semibold text-slate-700">
+            主题
+            <input
+              value={joinListText(document.script.themes)}
+              onChange={(event) =>
+                updateScriptField("themes", splitListText(event.target.value))
+              }
+              className={quietInput}
+            />
+          </label>
+          <label className="text-sm font-semibold text-slate-700">
+            备注
+            <textarea
+              value={document.metadata.notes}
+              onChange={(event) => updateMetadataNotes(event.target.value)}
+              className={`${quietTextarea} h-20`}
+            />
+          </label>
         </div>
       </div>
-    </div>
+
+      <details className="mt-6 rounded-lg border border-slate-200 bg-white p-5">
+        <summary className="cursor-pointer text-base font-semibold text-slate-950">
+          人物与地点设定
+        </summary>
+        <div className="mt-5 grid gap-5 lg:grid-cols-2">
+          <section>
+            <h4 className="text-sm font-semibold text-slate-700">人物</h4>
+            <div className="mt-3 space-y-4">
+              {document.characters.map((character, index) => (
+                <div
+                  key={character.character_id}
+                  className="rounded-lg border border-slate-100 p-4"
+                >
+                  <label className="text-sm font-semibold text-slate-700">
+                    人物
+                    <input
+                      value={character.name}
+                      onChange={(event) =>
+                        updateCharacter(index, {
+                          ...character,
+                          name: event.target.value,
+                        })
+                      }
+                      className={quietInput}
+                    />
+                  </label>
+                  <label className="mt-3 block text-sm font-semibold text-slate-700">
+                    角色定位
+                    <input
+                      value={character.role}
+                      onChange={(event) =>
+                        updateCharacter(index, {
+                          ...character,
+                          role: event.target.value,
+                        })
+                      }
+                      className={quietInput}
+                    />
+                  </label>
+                  <label className="mt-3 block text-sm font-semibold text-slate-700">
+                    描述
+                    <textarea
+                      value={character.description}
+                      onChange={(event) =>
+                        updateCharacter(index, {
+                          ...character,
+                          description: event.target.value,
+                        })
+                      }
+                      className={`${quietTextarea} h-20`}
+                    />
+                  </label>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <h4 className="text-sm font-semibold text-slate-700">地点</h4>
+            <div className="mt-3 space-y-4">
+              {document.locations.map((location, index) => (
+                <div
+                  key={location.location_id}
+                  className="rounded-lg border border-slate-100 p-4"
+                >
+                  <label className="text-sm font-semibold text-slate-700">
+                    地点
+                    <input
+                      value={location.name}
+                      onChange={(event) =>
+                        updateLocation(index, {
+                          ...location,
+                          name: event.target.value,
+                        })
+                      }
+                      className={quietInput}
+                    />
+                  </label>
+                  <label className="mt-3 block text-sm font-semibold text-slate-700">
+                    描述
+                    <textarea
+                      value={location.description}
+                      onChange={(event) =>
+                        updateLocation(index, {
+                          ...location,
+                          description: event.target.value,
+                        })
+                      }
+                      className={`${quietTextarea} h-24`}
+                    />
+                  </label>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </details>
+
+      <section className="mt-6 bg-white px-5 py-8 shadow-sm ring-1 ring-slate-200 sm:px-8">
+        <div className="mx-auto max-w-4xl text-center">
+          <input
+            value={document.script.title}
+            onChange={(event) => updateScriptField("title", event.target.value)}
+            className="w-full rounded-md border-0 bg-transparent px-2 py-1 text-center text-3xl font-semibold text-slate-950 outline-none transition focus:bg-teal-50/60"
+            aria-label="剧本标题"
+          />
+          <textarea
+            value={document.script.logline}
+            onChange={(event) =>
+              updateScriptField("logline", event.target.value)
+            }
+            className="mx-auto mt-3 min-h-16 w-full max-w-3xl resize-y rounded-md border-0 bg-transparent px-2 py-2 text-center text-base leading-8 text-slate-600 outline-none transition focus:bg-teal-50/60"
+            aria-label="剧本梗概"
+          />
+        </div>
+
+        <div className="mx-auto mt-10 max-w-4xl">
+          {getChapterScenes(document).map(({ chapter, scenes }) => (
+            <article
+              key={chapter.chapter_id}
+              className="min-h-[70vh] border-t border-slate-200 py-10 first:border-t-0 first:pt-0"
+            >
+              <header className="mb-10">
+                <p className="text-sm font-semibold tracking-wide text-teal-700">
+                  {chapter.chapter_id}
+                </p>
+                <h4 className="mt-2 text-3xl font-semibold text-slate-950">
+                  {chapter.title}
+                </h4>
+                <p className="mt-4 text-base leading-8 text-slate-600">
+                  {chapter.summary}
+                </p>
+              </header>
+
+              {scenes.map(({ scene, sceneIndex }) => (
+                <SceneCardEditor
+                  key={scene.scene_id}
+                  scene={scene}
+                  sceneIndex={sceneIndex}
+                  characterOptions={document.characters}
+                  locationName={getLocationName(document, scene.location_id)}
+                  characterNames={scene.characters.map((characterId) =>
+                    getCharacterName(document, characterId),
+                  )}
+                  onChange={(nextScene) => updateScene(sceneIndex, nextScene)}
+                />
+              ))}
+            </article>
+          ))}
+        </div>
+
+        <div className="mx-auto mt-10 max-w-4xl border-t border-slate-200 pt-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h4 className="text-base font-semibold text-slate-950">
+                完成修改
+              </h4>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                在这里直接生成 YAML 或检查当前稿件是否符合 Schema。
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={onGenerateYaml}
+                className="rounded-lg bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
+              >
+                生成 YAML
+              </button>
+              <button
+                type="button"
+                onClick={handleValidateSchema}
+                disabled={isValidating}
+                className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isValidating ? "正在校验..." : "Schema 校验"}
+              </button>
+            </div>
+          </div>
+
+          {validation.message ? (
+            <div
+              className={`mt-4 rounded-lg border p-4 text-sm ${
+                validation.status === "valid"
+                  ? "border-teal-200 bg-teal-50 text-teal-800"
+                  : "border-rose-200 bg-rose-50 text-rose-800"
+              }`}
+            >
+              <p className="font-semibold">{validation.message}</p>
+              {validation.issues.length > 0 ? (
+                <ul className="mt-3 space-y-2">
+                  {validation.issues.map((issue, index) => (
+                    <li
+                      key={`${issue.path}-${index}`}
+                      className="rounded-md bg-white/70 px-3 py-2"
+                    >
+                      <span className="font-mono text-xs">{issue.path}</span>
+                      <span className="mx-2">-</span>
+                      <span>{issue.message}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </section>
+    </section>
   );
 }

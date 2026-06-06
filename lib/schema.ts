@@ -85,7 +85,11 @@ function validateStringFields(
   });
 }
 
-function validateStringArray(values: unknown[] | null, path: string, issues: ValidationIssue[]) {
+function validateStringArray(
+  values: unknown[] | null,
+  path: string,
+  issues: ValidationIssue[],
+) {
   values?.forEach((value, index) => {
     if (!isNonEmptyString(value)) {
       addIssue(issues, `${path}[${index}]`, `${path}[${index}] 必须是非空字符串`);
