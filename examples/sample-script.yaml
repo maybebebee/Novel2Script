@@ -1,229 +1,121 @@
 script:
-  title: 雨夜来信
+  title: 雾灯下的第七封信
   source_type: novel
   language: zh-CN
-  logline: 旧书店继承人收到神秘来信，被迫打开尘封阁楼，发现一本正在书写她命运的剧本。
+  logline: 林澈收到父亲失踪前留下的第七封信，和青梅竹马顾眠一起追查旧邮局里的秘密。
   themes:
-    - 命运与选择
-    - 记忆与秘密
-    - 创作与现实
+    - 真相
+    - 友情
+    - 选择
 chapters:
   - chapter_id: chapter_001
-    title: 雨夜来信
-    summary: 林晚在旧书店收到无名来信，信中警告她日出前不要打开阁楼的门。
+    title: 第一章 雾灯
+    summary: 林澈收到匿名信，被引向废弃旧邮局。
   - chapter_id: chapter_002
-    title: 阁楼脚步
-    summary: 午夜后阁楼响起脚步声，林晚听见门后有人翻动外祖父留下的剧本。
+    title: 第二章 邮戳
+    summary: 林澈和顾眠发现信件邮戳来自三年前。
   - chapter_id: chapter_003
-    title: 未写完的剧本
-    summary: 林晚推开阁楼门，看见剧本记录着她的言行，并发现一张诡异舞台照片。
+    title: 第三章 第七封信
+    summary: 两人在旧邮局找到父亲失踪前留下的证据。
 characters:
   - character_id: char_001
-    name: 林晚
+    name: 林澈
     role: 主角
-    description: 旧书店继承人，谨慎、敏感，对外祖父留下的秘密既恐惧又无法回避。
-    motivation: 查清阁楼和剧本的真相，摆脱被未知力量书写命运的处境。
+    description: 青年，父亲三年前失踪，一直执着调查真相。
+    motivation: 查明父亲失踪的真相，揭露隐藏的秘密。
     relationships:
-      - 与外祖父有深厚情感连接
+      - 与顾眠是青梅竹马
 locations:
   - location_id: loc_001
-    name: 旧书店
-    description: 雨夜中的老书店，书架密集，玻璃窗外街灯摇晃，通往阁楼的窄梯藏在店铺深处。
-  - location_id: loc_002
-    name: 阁楼
-    description: 尘封多年、泛着蓝光的房间，中央放着一本未写完的黑色剧本。
+    name: 旧邮局
+    description: 雾灯下的废弃邮局，墙面潮湿，柜台后堆满未寄出的信。
 scenes:
   - scene_id: scene_001
     chapter_id: chapter_001
-    title: 无名来信
+    title: 第七封信
     location_id: loc_001
-    time: 雨夜打烊前
-    summary: 林晚收到警告信，并注意到阁楼门缝落下蓝色灰尘。
+    time: 夜
+    summary: 林澈拆开匿名信，发现信里提到父亲失踪真相。
     characters:
       - char_001
     visual:
-      atmosphere: 雨声包围旧书店，暖黄街灯透过玻璃窗，书架像沉默旁观者一样压在林晚四周。
+      atmosphere: 雾气压低街灯，旧邮局内光线昏黄，墙上的影子被拉得很长。
       key_props:
-        - 没有署名的旧信
-        - 被火烤过边缘的信纸
-        - 通往阁楼的窄梯
-        - 蓝色灰尘
+        - 湿漉漉的匿名信
+        - 生锈信箱
       sensory_details:
-        - 雨水沿着玻璃窗往下爬
-        - 纸张带着旧木头和烟灰味
-        - 店内挂钟发出低哑滴答声
+        - 雨声
+        - 远处电车声
+        - 木门轻响
     action_lines:
-      - 林晚把最后一本书推回书架，指尖沾到窗边渗进来的潮气。
-      - 柜台上的旧信被风吹动，信纸边缘卷起一圈焦黑痕迹。
-      - 她读完警告后抬头看向窄梯，阁楼门缝里落下一点蓝色灰尘。
+      - 林澈推开旧邮局的门，雨水从外套下摆滴落。
+      - 他拆开第七封信，看到父亲的名字后停住呼吸。
+      - 柜台后的信箱忽然自己弹开一格。
     beats:
       - beat_id: beat_001
-        type: action
-        content: 林晚整理柜台时发现一封没有署名的旧信。
-        character_actions:
-          - character_id: char_001
-            character_name: 林晚
-            action: 她停下打烊动作，用指腹压住被风掀起的信纸。
-      - beat_id: beat_002
         type: discovery
-        content: 信中警告她日出前不要打开阁楼的门。
+        content: 林澈确认匿名信和父亲失踪有关。
         character_actions:
           - character_id: char_001
-            character_name: 林晚
-            action: 她低声读出信上的字，呼吸在最后一个字时停住。
-      - beat_id: beat_003
-        type: visual
-        content: 阁楼门缝落下蓝色灰尘，像有人刚刚在门后移动。
-        character_actions:
-          - character_id: char_001
-            character_name: 林晚
-            action: 她慢慢后退半步，却没有移开视线。
-      - beat_id: beat_004
-        type: tension
-        content: 书店灯光闪烁，林晚意识到信里的警告正在变成现实。
-        character_actions:
-          - character_id: char_001
-            character_name: 林晚
-            action: 她把信折进口袋，握住柜台下的手电。
+            character_name: 林澈
+            action: 他用拇指压住信纸边缘，强迫自己继续读下去。
     dialogues:
       - character_id: char_001
-        character_name: 林晚
-        emotion: 不安
-        line: 明天日出前，不要打开阁楼的门？
-        action: 她盯着信纸，声音压得很低。
-    transition: 镜头推向阁楼门缝中坠落的蓝色灰尘。
-    screenplay_text: 雨夜，旧书店即将打烊。林晚把最后一本书推进书架，窗外街灯被雨水拉成模糊的长线。柜台上一封旧信忽然被风吹动，她伸手压住信纸，发现边缘像被火烤过。信上没有署名，只有一句警告：明天日出前，不要打开阁楼的门。林晚低声读完，抬头看向通往二楼的窄梯。多年没有开启的阁楼门缝里，落下一点蓝色灰尘。她握紧信纸，伸手摸向柜台下的手电。镜头停在她不安的眼睛上。
+        character_name: 林澈
+        emotion: 紧张
+        line: 爸，你到底想让我找到什么？
+        action: 他抬头看向柜台后黑暗处。
+    transition: 镜头推向弹开的信箱。
+    screenplay_text: 第1场 旧邮局 夜 雨。画面：雾气贴着玻璃，旧邮局内灯光昏黄。动作：林澈拆开湿漉漉的匿名信，看到父亲名字时脸色一变。台词：林澈：爸，你到底想让我找到什么？音效：雨声，柜台后传来信箱弹开的声音。情绪：林澈从疑惑转为紧张。
   - scene_id: scene_002
     chapter_id: chapter_002
-    title: 门后的翻页声
+    title: 三年前的邮戳
     location_id: loc_001
-    time: 午夜
-    summary: 林晚听见阁楼脚步和翻页声，想起外祖父提过的禁忌剧本。
+    time: 夜
+    summary: 林澈发现信件邮戳来自父亲失踪那天。
     characters:
       - char_001
     visual:
-      atmosphere: 午夜的书店几乎失去颜色，手电光束切开楼梯口的黑暗，阁楼门后传来纸页摩擦声。
+      atmosphere: 手电光扫过积灰的邮戳机，灰尘在光束中漂浮。
       key_props:
-        - 停在十二点十七分的挂钟
-        - 手电筒
-        - 阁楼门
-        - 未写完的剧本
+        - 邮戳机
       sensory_details:
-        - 木楼梯发出轻微呻吟
-        - 门后翻页声缓慢而清晰
-        - 手电光中漂浮着细小尘埃
+        - 手电轻响
     action_lines:
-      - 挂钟指针停在十二点十七分，秒针像被什么东西卡住。
-      - 林晚握着手电站在楼梯口，光束在门板上抖动。
-      - 门后传来翻页声，像有人故意让她听见。
+      - 林澈翻看旧信，找到三年前的邮戳。
     beats:
-      - beat_id: beat_005
-        type: sound
-        content: 阁楼上传来缓慢脚步声，打破午夜书店的静默。
-        character_actions:
-          - character_id: char_001
-            character_name: 林晚
-            action: 她猛地抬头，手电差点从手中滑落。
-      - beat_id: beat_006
-        type: memory
-        content: 林晚想起外祖父临终前提过阁楼里锁着一本不能写完的剧本。
-        character_actions:
-          - character_id: char_001
-            character_name: 林晚
-            action: 她站在楼梯口，指节因用力握紧手电而发白。
-      - beat_id: beat_007
-        type: dialogue
-        content: 林晚试探性地询问门后的人，却只得到更清晰的翻页声。
-        character_actions:
-          - character_id: char_001
-            character_name: 林晚
-            action: 她压低声音，试图让自己听起来镇定。
-      - beat_id: beat_008
-        type: supernatural
-        content: 门后剧本似乎写下了她下一秒会说的话。
-        character_actions:
-          - character_id: char_001
-            character_name: 林晚
-            action: 她突然捂住嘴，意识到自己刚说出口的话被提前记录。
-    dialogues:
-      - character_id: char_001
-        character_name: 林晚
-        emotion: 紧张
-        line: 谁在里面？
-        action: 她站在楼梯口，把手电光对准阁楼门。
-      - character_id: char_001
-        character_name: 林晚
-        emotion: 惊疑
-        line: 不可能……这句话怎么会先写出来？
-        action: 她后退一步，肩膀撞到书架。
-    transition: 翻页声戛然而止，只剩手电光落在门把手上。
-    screenplay_text: 午夜过后，旧书店只剩挂钟的滴答声。忽然，滴答停止，指针停在十二点十七分。阁楼上传来缓慢脚步声。林晚握着手电站在楼梯口，光束在门板上抖动。门后有人翻页，每一页都像贴着她耳边翻过。她想起外祖父临终前说过，阁楼里锁着一本不能写完的剧本。林晚问：“谁在里面？”门后没有回答，只有笔尖划过纸面的声音。她看见门缝下露出一行字，正是她下一秒想说的话。她猛地捂住嘴，书架阴影向她压来。
+      - beat_id: beat_002
+        type: reveal
+        content: 邮戳时间与父亲失踪时间重合。
+        character_actions: []
+    dialogues: []
+    transition: 手电光停在邮戳日期上。
+    screenplay_text: 第2场 旧邮局 夜。画面：手电光扫过旧邮戳机。动作：林澈翻出一封旧信，发现日期正是父亲失踪那天。音效：纸页摩擦。情绪：怀疑加深。
   - scene_id: scene_003
     chapter_id: chapter_003
-    title: 空白末页
-    location_id: loc_002
-    time: 午夜后
-    summary: 林晚进入阁楼，发现剧本和一张显示另一个自己的舞台照片。
+    title: 未寄出的真相
+    location_id: loc_001
+    time: 黎明前
+    summary: 林澈找到父亲留下的证据。
     characters:
       - char_001
     visual:
-      atmosphere: 阁楼被冷蓝光包裹，雨声突然消失，空间像舞台开演前的一秒静默。
+      atmosphere: 天色微亮，旧邮局里的雾气渐渐散开。
       key_props:
-        - 黑色封面的剧本
-        - 旧钥匙
-        - 舞台照片
-        - 空白末页
+        - 第七封信
       sensory_details:
-        - 空气里有尘土和潮湿木板味
-        - 蓝光让林晚的影子被拉得很长
-        - 照片纸面冰冷
+        - 清晨风声
     action_lines:
-      - 林晚推开阁楼门，冷蓝光从门缝扩散到她脚边。
-      - 桌上的黑色剧本摊开，第一页写着她刚刚说过的话。
-      - 她拿起照片，看见舞台中央的自己和观众席第一排另一个自己。
+      - 林澈打开最后一格信箱，取出父亲留下的录音笔。
     beats:
-      - beat_id: beat_009
-        type: action
-        content: 林晚进入阁楼，看见黑色封面的剧本。
-        character_actions:
-          - character_id: char_001
-            character_name: 林晚
-            action: 她用肩膀顶开门，手电光扫过布满灰尘的桌面。
-      - beat_id: beat_010
-        type: discovery
-        content: 剧本第一页记录着她刚刚说过的话，最后一页仍是空白。
-        character_actions:
-          - character_id: char_001
-            character_name: 林晚
-            action: 她翻页的手开始发抖，指尖停在空白末页上。
-      - beat_id: beat_011
-        type: reveal
-        content: 她发现一张旧照片，照片里出现两个林晚。
-        character_actions:
-          - character_id: char_001
-            character_name: 林晚
-            action: 她把照片举到蓝光下，瞳孔骤然收紧。
-      - beat_id: beat_012
+      - beat_id: beat_003
         type: decision
-        content: 林晚意识到自己必须继续写下去，才能知道剧本想让她扮演什么角色。
-        character_actions:
-          - character_id: char_001
-            character_name: 林晚
-            action: 她拿起旧钥匙，慢慢把它压在空白页上。
-    dialogues:
-      - character_id: char_001
-        character_name: 林晚
-        emotion: 震惊
-        line: 这不可能是我。
-        action: 她盯着照片中坐在观众席第一排的自己。
-      - character_id: char_001
-        character_name: 林晚
-        emotion: 决意
-        line: 如果结局还没写完，那就由我来写。
-        action: 她把旧钥匙压在剧本空白页上。
-    transition: 空白页上浮现出第一行新字，蓝光吞没画面。
-    screenplay_text: 林晚最终推开阁楼门。冷蓝光从门缝里涌出，雨声像被人瞬间关掉。阁楼中央的桌上放着一本黑色封面的剧本，第一页写着她刚才说过的话，最后一页却仍是空白。剧本旁压着一枚旧钥匙和一张照片。林晚拿起照片，看到自己站在陌生舞台中央，而观众席第一排坐着另一个和她一模一样的人。她低声说：“这不可能是我。”蓝光照亮她发白的指节。她把旧钥匙放在空白页上，像做出选择一样说：“如果结局还没写完，那就由我来写。”纸面浮现出第一行新字。
+        content: 林澈决定公开真相。
+        character_actions: []
+    dialogues: []
+    transition: 录音笔红灯亮起。
+    screenplay_text: 第3场 旧邮局 黎明前。画面：雾气散开，旧信箱露出生锈编号。动作：林澈取出录音笔，按下播放键。音效：电流声后传出父亲的声音。情绪：他从恐惧转为坚定。
 metadata:
   schema_version: "1.1.0"
-  generated_by: llm
-  notes: 示例 YAML 展示 Novel2Script 结构层与细节层结合后的输出形态，可用于剧本编辑、校验和漫剧生产前置处理。
+  generated_by: example
+  notes: 示例 YAML 展示 Novel2Script 细节版 Schema 的基本结构。

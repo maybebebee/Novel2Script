@@ -14,8 +14,7 @@ export default function Home() {
             {APP_NAME}
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-700">
-            一个 AI 小说转剧本工具，帮助作者把三章以上小说文本转换为结构化剧本
-            YAML，获得可编辑、可校验、可导出的细节版剧本初稿。
+            一个 AI 小说转剧本工具，帮助作者把三章以上小说文本转换成可编辑、可校验、可导出的结构化剧本初稿。
           </p>
         </div>
       </section>
@@ -25,7 +24,7 @@ export default function Home() {
           <SectionHeading
             eyebrow="Workflow"
             title="核心流程"
-            description="从章节检测到 AI 生成，再到 YAML 编辑、剧本预览修改、Schema 校验和导出，评委可以在首页完成端到端体验。"
+            description="先检测小说章节，再生成适合编剧阅读和修改的中文剧本稿；作者确认后，再把剧本稿同步为符合 Schema 的 YAML 数据。"
           />
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -49,7 +48,7 @@ export default function Home() {
           <SectionHeading
             eyebrow="Start"
             title="开始使用"
-            description="粘贴三章以上小说文本，或直接加载示例小说。生成后会先展示 YAML，再通过“修改剧本”窗口以更接近剧作家的方式编辑正文、画面细节、动作和对白。"
+            description="粘贴三章以上小说文本，或直接加载示例小说。生成后会先进入中文剧本修改页，确认修改后再生成 YAML。"
           />
           <NovelInput />
         </div>

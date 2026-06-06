@@ -111,13 +111,13 @@ export function YamlEditor({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">
-            YAML Data
+            YAML Schema Data
           </p>
           <h3 className="mt-2 text-lg font-semibold text-slate-950">
             YAML 数据层
           </h3>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            这里展示结构化剧本数据，可用于校验、导出和后续工具处理。需要像剧作家一样修改时，打开剧本修改窗口。
+            这里展示由中文剧本稿同步生成的结构化 YAML，可用于校验、导出和后续工具处理。
           </p>
           {usageNote ? (
             <p className="mt-2 text-sm leading-6 text-slate-500">{usageNote}</p>
@@ -130,7 +130,7 @@ export function YamlEditor({
               onClick={onOpenScriptEditor}
               className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
-              修改剧本
+              从 YAML 同步回剧本
             </button>
           ) : null}
           <button
