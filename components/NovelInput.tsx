@@ -26,6 +26,34 @@ function countWords(text: string) {
   return Array.from(text.replace(/\s/g, "")).length;
 }
 
+function getErrorRecoveryTips(message: string) {
+  if (message.includes("OPENAI_API_KEY")) {
+    return [
+      "检查项目根目录的 .env.local 是否已配置 OPENAI_API_KEY。",
+      "修改环境变量后需要重新启动 npm run dev。",
+    ];
+  }
+
+  if (message.includes("YAML") || message.includes("解析")) {
+    return [
+      "可以重新点击生成，系统会再次尝试修复模型输出格式。",
+      "如果输入很长，先缩短到 3-5 个章节进行演示会更稳定。",
+    ];
+  }
+
+  if (message.includes("太短") || message.includes("章节")) {
+    return [
+      "确认文本包含“第一章”“第二章”“第三章”等章节标题。",
+      "每章保留几段正文，避免只输入目录或大纲。",
+    ];
+  }
+
+  return [
+    "确认网络和模型服务可用后重试。",
+    "保留章节标题和主要正文，避免输入格式过于零散。",
+  ];
+}
+
 export function NovelInput() {
   const [text, setText] = useState("");
   const [yamlText, setYamlText] = useState("");
@@ -209,6 +237,16 @@ export function NovelInput() {
         placeholder="请粘贴三章以上小说文本，例如：第一章 雨夜来信、第二章 阁楼脚步、第三章 未写完的剧本..."
       />
 
+      {!text.trim() ? (
+        <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+          还没有输入小说文本。可以先点击“加载示例小说”体验完整流程，再替换成自己的三章以上小说正文。
+        </div>
+      ) : chapterResult.count === 0 ? (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+          当前没有识别到章节标题。建议使用“第一章 标题”“第二章 标题”“第三章 标题”这种格式。
+        </div>
+      ) : null}
+
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg bg-slate-50 p-4">
           <p className="text-sm text-slate-500">当前输入字数</p>
@@ -268,7 +306,15 @@ export function NovelInput() {
 
       {errorMessage ? (
         <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-800">
-          {errorMessage}
+          <p>{errorMessage}</p>
+          <div className="mt-3 font-normal leading-6">
+            <p className="font-semibold">可以这样排查：</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {getErrorRecoveryTips(errorMessage).map((tip) => (
+                <li key={tip}>{tip}</li>
+              ))}
+            </ul>
+          </div>
         </div>
       ) : null}
 
@@ -276,7 +322,10 @@ export function NovelInput() {
         <div className="mt-8 space-y-8">
           {previewError ? (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800">
-              {previewError}
+              <p>{previewError}</p>
+              <p className="mt-2 font-normal leading-6">
+                可以先在下方 YAML 数据层查看具体内容；如果是手动编辑导致结构错误，修正后点击“从 YAML 同步回剧本”。
+              </p>
             </div>
           ) : null}
 
