@@ -32,30 +32,6 @@ function dialogueToLine(dialogue: Dialogue) {
   return `${name}${emotion}：${dialogue.line}`;
 }
 
-function makeSceneHeading(sceneIndex: number, locationName: string, time: string) {
-  return `第${sceneIndex + 1}场 ${locationName} ${time}`.trim();
-}
-
-function formatSceneTextForEditor(
-  scene: Scene,
-  sceneIndex: number,
-  locationName: string,
-) {
-  if (scene.screenplay_text.includes("\n")) {
-    return scene.screenplay_text;
-  }
-
-  const paragraphs = [
-    makeSceneHeading(sceneIndex, locationName, scene.time),
-    scene.visual.atmosphere,
-    ...scene.action_lines,
-    ...scene.dialogues.map(dialogueToLine),
-    scene.transition ? `转场：${scene.transition.replace(/^转场[:：]\s*/, "")}` : "",
-  ].filter((paragraph) => paragraph.trim().length > 0);
-
-  return paragraphs.join("\n\n");
-}
-
 function parseDialogueLine(
   value: string,
   fallback: Dialogue,
@@ -104,42 +80,6 @@ function parseBeatText(value: string, scene: Scene) {
       character_actions: fallback?.character_actions || [],
     };
   });
-}
-
-function lineLooksLikeDialogue(line: string) {
-  return /^.+?(?:（.+?）)?[:：].+$/.test(line);
-}
-
-function lineLooksLikeSceneHeading(line: string) {
-  return /^第.+?场\b/.test(line);
-}
-
-function lineLooksLikeTransition(line: string) {
-  return /^转场[:：]/.test(line);
-}
-
-function deriveSceneFieldsFromScreenplayText(value: string, scene: Scene) {
-  const lines = splitLines(value);
-  const transitionLine = lines.find(lineLooksLikeTransition);
-  const contentLines = lines.filter(
-    (line) => !lineLooksLikeSceneHeading(line) && !lineLooksLikeTransition(line),
-  );
-  const dialogueLines = contentLines.filter(lineLooksLikeDialogue);
-  const actionLines = contentLines.filter((line) => !lineLooksLikeDialogue(line));
-
-  return {
-    screenplay_text: value,
-    action_lines: actionLines.length ? actionLines : ["动作待补充"],
-    beats: actionLines.length
-      ? parseBeatText(actionLines.join("\n"), scene)
-      : scene.beats,
-    dialogues: dialogueLines.length
-      ? parseDialogueText(dialogueLines.join("\n"), scene.dialogues)
-      : scene.dialogues,
-    transition: transitionLine
-      ? transitionLine.replace(/^转场[:：]\s*/, "")
-      : scene.transition,
-  };
 }
 
 const plainInput =
@@ -198,13 +138,6 @@ export function SceneCardEditor({
     );
   }
 
-  function updateScreenplayText(value: string) {
-    onChange({
-      ...scene,
-      ...deriveSceneFieldsFromScreenplayText(value, scene),
-    });
-  }
-
   return (
     <article className="py-8 first:pt-0">
       <header>
@@ -229,111 +162,91 @@ export function SceneCardEditor({
         </p>
       </header>
 
-      <div className="mt-7 text-base leading-8 text-slate-950">
-        <section>
-          <h4 className="mb-3 text-sm font-semibold tracking-wide text-slate-500">
-            场景正文：
+      <div className="mt-7 grid gap-y-5 text-base leading-8 text-slate-950">
+        <section className="grid gap-3 sm:grid-cols-[6rem_1fr]">
+          <h4 className={editorLabel}>
+            画面：
           </h4>
           <textarea
-            value={formatSceneTextForEditor(scene, sceneIndex, locationName)}
-            onChange={(event) => updateScreenplayText(event.target.value)}
-            className={`${editorTextarea} min-h-96 w-full text-slate-950`}
-            aria-label={`第${sceneIndex + 1}场场景正文`}
+            value={scene.visual.atmosphere}
+            onChange={(event) =>
+              updateScene("visual", {
+                ...scene.visual,
+                atmosphere: event.target.value,
+              })
+            }
+            className={`${editorTextarea} min-h-16`}
           />
         </section>
 
-        <details className="mt-6 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
-          <summary className="cursor-pointer text-sm font-semibold text-slate-700">
-            结构化字段
-          </summary>
+        <section className="grid gap-3 sm:grid-cols-[6rem_1fr]">
+          <h4 className={editorLabel}>
+            动作：
+          </h4>
+          <textarea
+            value={joinLines(scene.action_lines)}
+            onChange={(event) => updateActionLines(event.target.value)}
+            className={`${editorTextarea} min-h-32`}
+          />
+        </section>
 
-          <div className="mt-5 grid gap-y-5 text-base leading-8 text-slate-950">
-            <section className="grid gap-3 sm:grid-cols-[6rem_1fr]">
-              <h4 className={editorLabel}>
-                画面：
-              </h4>
-              <textarea
-                value={scene.visual.atmosphere}
-                onChange={(event) =>
-                  updateScene("visual", {
-                    ...scene.visual,
-                    atmosphere: event.target.value,
-                  })
-                }
-                className={`${editorTextarea} min-h-16`}
-              />
-            </section>
+        <section className="grid gap-3 sm:grid-cols-[6rem_1fr]">
+          <h4 className={editorLabel}>
+            台词：
+          </h4>
+          <textarea
+            value={joinLines(scene.dialogues.map(dialogueToLine))}
+            onChange={(event) => updateDialogues(event.target.value)}
+            placeholder="当前场景没有对白。"
+            className={`${editorTextarea} min-h-40 text-slate-900`}
+            aria-label={`第${sceneIndex + 1}场台词`}
+          />
+        </section>
 
-            <section className="grid gap-3 sm:grid-cols-[6rem_1fr]">
-              <h4 className={editorLabel}>
-                动作：
-              </h4>
-              <textarea
-                value={joinLines(scene.action_lines)}
-                onChange={(event) => updateActionLines(event.target.value)}
-                className={`${editorTextarea} min-h-24`}
-              />
-            </section>
+        <section className="grid gap-3 sm:grid-cols-[6rem_1fr]">
+          <h4 className={editorLabel}>
+            音效：
+          </h4>
+          <textarea
+            value={joinLines(scene.visual.sensory_details)}
+            onChange={(event) => updateSensoryDetails(event.target.value)}
+            className={`${editorTextarea} min-h-16 text-slate-700`}
+          />
+        </section>
 
-            <section className="grid gap-3 sm:grid-cols-[6rem_1fr]">
-              <h4 className={editorLabel}>
-                台词：
-              </h4>
-              <textarea
-                value={joinLines(scene.dialogues.map(dialogueToLine))}
-                onChange={(event) => updateDialogues(event.target.value)}
-                placeholder="当前场景没有对白。"
-                className={`${editorTextarea} min-h-28 text-slate-900`}
-                aria-label={`第${sceneIndex + 1}场台词`}
-              />
-            </section>
+        <section className="grid gap-3 sm:grid-cols-[6rem_1fr]">
+          <h4 className={editorLabel}>
+            情绪：
+          </h4>
+          <textarea
+            value={scene.summary}
+            onChange={(event) => updateScene("summary", event.target.value)}
+            className={`${editorTextarea} min-h-16 text-slate-700`}
+          />
+        </section>
 
-            <section className="grid gap-3 sm:grid-cols-[6rem_1fr]">
-              <h4 className={editorLabel}>
-                音效：
-              </h4>
-              <textarea
-                value={joinLines(scene.visual.sensory_details)}
-                onChange={(event) => updateSensoryDetails(event.target.value)}
-                className={`${editorTextarea} min-h-16 text-slate-700`}
-              />
-            </section>
+        <section className="grid gap-3 sm:grid-cols-[6rem_1fr]">
+          <h4 className={editorLabel}>
+            剧情节拍：
+          </h4>
+          <textarea
+            value={joinLines(scene.beats.map((beat) => beat.content))}
+            onChange={(event) => updateBeats(event.target.value)}
+            className={`${editorTextarea} min-h-36 text-slate-700`}
+            aria-label={`第${sceneIndex + 1}场剧情节拍`}
+          />
+        </section>
 
-            <section className="grid gap-3 sm:grid-cols-[6rem_1fr]">
-              <h4 className={editorLabel}>
-                场景摘要：
-              </h4>
-              <textarea
-                value={scene.summary}
-                onChange={(event) => updateScene("summary", event.target.value)}
-                className={`${editorTextarea} min-h-16 text-slate-700`}
-              />
-            </section>
-
-            <section className="grid gap-3 sm:grid-cols-[6rem_1fr]">
-              <h4 className={editorLabel}>
-                剧情节拍：
-              </h4>
-              <textarea
-                value={joinLines(scene.beats.map((beat) => beat.content))}
-                onChange={(event) => updateBeats(event.target.value)}
-                className={`${editorTextarea} min-h-28 text-slate-700`}
-                aria-label={`第${sceneIndex + 1}场剧情节拍`}
-              />
-            </section>
-
-            <section className="grid gap-3 sm:grid-cols-[6rem_1fr]">
-              <h4 className={editorLabel}>
-                转场：
-              </h4>
-              <textarea
-                value={scene.transition}
-                onChange={(event) => updateScene("transition", event.target.value)}
-                className={`${editorTextarea} min-h-12 text-slate-700`}
-              />
-            </section>
-          </div>
-        </details>
+        <section className="grid gap-3 sm:grid-cols-[6rem_1fr]">
+          <h4 className={editorLabel}>
+            转场：
+          </h4>
+          <textarea
+            value={scene.transition}
+            onChange={(event) => updateScene("transition", event.target.value)}
+            className={`${editorTextarea} min-h-12 text-slate-700`}
+          />
+        </section>
       </div>
     </article>
   );
