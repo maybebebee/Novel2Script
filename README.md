@@ -134,9 +134,7 @@ OpenAI-compatible API 地址。未配置时默认使用 `https://api.openai.com/
 
 ## Demo 视频
 
-Demo 视频链接：待补充
-
-最终提交前需要替换为可访问的视频链接，例如 bilibili、网盘或其他公开可访问平台。
+Demo 视频链接：[https://www.bilibili.com/video/BV1siEs68ExV/](https://www.bilibili.com/video/BV1siEs68ExV/?vd_source=56bc76ff1fce05913b8a70a246a4e85f)
 
 ## 持续交付与 PR 记录
 
@@ -151,7 +149,9 @@ Demo 视频链接：待补充
 
 当前主要 PR：
 
+- [PR #1 Upgrade detailed script schema and editor sync](https://github.com/maybebebee/Novel2Script/pull/1)
 - [PR #2 Add chaptered screenplay editor](https://github.com/maybebebee/Novel2Script/pull/2)
+- [PR #3 Improve delivery docs and error guidance](https://github.com/maybebebee/Novel2Script/pull/3)
 
 每个 PR 描述应包含功能描述、实现思路和测试方式，方便评委核对功能变更与代码提交记录。
 
