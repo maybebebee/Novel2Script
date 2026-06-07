@@ -22,6 +22,7 @@ export function YamlEditor({
   onYamlTextChange,
   onOpenScriptEditor,
 }: YamlEditorProps) {
+  const hasYaml = yamlText.trim().length > 0;
   const [isValidating, setIsValidating] = useState(false);
   const [validation, setValidation] = useState<ValidationState>({
     status: "idle",
@@ -30,6 +31,20 @@ export function YamlEditor({
   });
 
   async function handleValidate() {
+    if (!hasYaml) {
+      setValidation({
+        status: "invalid",
+        issues: [
+          {
+            path: "yaml",
+            message: "YAML 内容为空，请先从中文剧本生成 YAML。",
+          },
+        ],
+        message: "校验未通过，请根据以下问题修改 YAML。",
+      });
+      return;
+    }
+
     setIsValidating(true);
     setValidation({
       status: "idle",
@@ -83,6 +98,20 @@ export function YamlEditor({
   }
 
   function handleExport() {
+    if (!hasYaml) {
+      setValidation({
+        status: "invalid",
+        issues: [
+          {
+            path: "yaml",
+            message: "没有可导出的 YAML。",
+          },
+        ],
+        message: "导出前请先生成 YAML。",
+      });
+      return;
+    }
+
     const blob = new Blob([yamlText], {
       type: "text/yaml;charset=utf-8",
     });
@@ -157,6 +186,12 @@ export function YamlEditor({
         className="mt-4 h-96 w-full resize-y rounded-lg border border-slate-200 bg-slate-950 p-4 font-mono text-sm leading-6 text-slate-50 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
         spellCheck={false}
       />
+
+      {!hasYaml ? (
+        <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+          暂无 YAML 数据。请先在中文剧本修改页点击“生成 YAML”，再进行校验或导出。
+        </div>
+      ) : null}
 
       {validation.message ? (
         <div
