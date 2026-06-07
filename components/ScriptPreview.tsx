@@ -195,7 +195,7 @@ export function ScriptPreview({
             中文剧本修改页
           </h3>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            这里先以编剧熟悉的剧本文稿方式展示。每一处修改都会同步到底层结构，确认后再生成 YAML。
+            这里先以编剧熟悉的连续场景正文展示。结构化字段会保留在折叠区中，确认后再生成 YAML。
           </p>
         </div>
         <button
